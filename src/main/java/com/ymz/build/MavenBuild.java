@@ -15,24 +15,6 @@ import java.util.Collections;
  **/
 @Slf4j
 public class MavenBuild {
-    public static void main(String[] args) {
-        InvocationRequest request = new DefaultInvocationRequest();
-        request.setPomFile(new File("G:\\CODE\\TSvnPwd4java-master哈哈哈\\pom.xml"));
-        request.setGoals(Collections.singletonList("package -Dmaven.test.skip=true"));
-        String javaHome = System.getenv("JAVA_HOME");
-        System.out.println(javaHome);
-        request.setJavaHome(new File("C:\\Program Files\\Java\\jdk1.8.0_271\\"));
-        Invoker invoker = new DefaultInvoker();
-        invoker.setMavenHome(new File("D:\\apache-maven-3.6.3"));
-        try {
-            InvocationResult execute = invoker.execute(request);
-            if (execute.getExitCode() != 0) {
-                throw new IllegalStateException("Build failed.");
-            }
-        } catch (MavenInvocationException e) {
-            log.error("Build failed.", e);
-        }
-    }
 
     /**
      * maven打包
