@@ -1,0 +1,252 @@
+package com.ymz.svnpatch;
+
+import com.ymz.util.AllUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * 增量文件过滤器
+ *
+ * @author: ymz
+ * @date: 2021-08-18 23:21
+ **/
+@Slf4j
+public class PatchFileFilter {
+    /**
+     * 是否maven项目
+     */
+    private boolean mavenProject = false;
+    private String deleteFilePath = "E:\\jh\\del_eyes.txt";
+    private static String line = System.getProperty("line.separator");
+
+    public PatchFileFilter(boolean mavenProject,String deleteFilePath) {
+        this.mavenProject = mavenProject;
+        this.deleteFilePath = deleteFilePath;
+    }
+
+    /**
+     * 过滤并删除文件
+     *
+     * @param history
+     * @param rootPath
+     */
+    public void filterAndDel(List<String> history, String rootPath) {
+        int needClean = 0;
+        // 转换为war包内地址(linux 斜杠)
+        Set<String> fileInWarPath = transferPathInWarLinuxSeparator(history);
+        if(fileInWarPath.isEmpty()){
+            return;
+        }
+        File rootFilePath = new File(rootPath);
+        List<File> allFiles = AllUtils.getAllFiles(rootFilePath);
+        String parentName = StringUtils.substringAfterLast(rootPath, File.separator);
+        for (File file : allFiles) {
+            // 判断是否spring.components文件
+            if(file.getPath().endsWith("spring.components") || file.getPath().endsWith("build_version.properties")){
+                log.info("保留特殊文件:{}",file.getPath());
+                continue;
+            }
+            // 转为linux斜杠
+            String pathLinux = AllUtils.replaceFileSeparatorToLinux(file.getPath());
+            // 本地文件在war包内地址
+            String localFilePathInWar = StringUtils.substringAfter(pathLinux,"/" + parentName);
+            // 替换class为java
+            localFilePathInWar = AllUtils.classToJava(localFilePathInWar);
+            // 判断要不要保留
+            if(!fileInWarPath.contains(localFilePathInWar)){
+                FileUtils.deleteQuietly(file);
+                needClean ++;
+                log.debug("del: {}",localFilePathInWar);
+            } else {
+                needClean ++;
+                log.info("保留文件:{}",file.getPath());
+            }
+        }
+        // 有删除有保留才清理空文件夹
+        if(needClean == 2) {
+            log.info("清除空文件夹");
+            AllUtils.clearEmptyDir(rootFilePath);
+        }
+    }
+
+    /**
+     * 转换svn地址为war包地址
+     *
+     * @param svnRepositoryHistory
+     * @return
+     */
+    public Set<String> transferPathInWarLinuxSeparator(List<String> svnRepositoryHistory) {
+        List<String> returnPathInWar = new ArrayList<>();
+        // svn已被删除的文件，需要特殊处理
+        List<String> deletes = new ArrayList<>();
+        for (int i = 0; i < svnRepositoryHistory.size(); i++) {
+            String svnInfo = svnRepositoryHistory.get(i);
+            String svnInfoRaw = svnRepositoryHistory.get(i);
+            // 处理斜杠为linux,方便处理
+            svnInfo = AllUtils.replaceFileSeparatorToLinux(svnInfo);
+            // 处理svn已被删除的代码或者文件
+            handleRealDelFile(svnRepositoryHistory, deletes, i, svnInfoRaw);
+            // 去除from信息
+            svnInfo = replaceInfo(svnInfo);
+            if (svnInfo.endsWith("/")) {
+                // 最后一个斜杠结尾，说明不是文件
+                continue;
+            }
+            String afterLast = StringUtils.substringAfterLast(svnInfo, "/");
+            if (StringUtils.isBlank(afterLast) || !afterLast.contains(".")) {
+                // 最后一个斜杠结尾的为空或者不包含点，说明不是文件
+                continue;
+            }
+            String filePathInWar = svnPathToPathInWar(svnInfo);
+            if (StringUtils.isNotBlank(filePathInWar)) {
+                returnPathInWar.add(AllUtils.replaceFileSeparatorToLinux(filePathInWar));
+            }
+        }
+        // 将被删除的集合文件输出到文件中
+        if (!deletes.isEmpty()) {
+            writeListToFile(deletes);
+        }
+        HashSet<String> pathSet = new HashSet<>(returnPathInWar);
+        return pathSet;
+    }
+
+    /**
+     * 保存真正被删除的文件
+     * @param svnRepositoryHistory
+     * @param deletes
+     * @param i
+     * @param svnInfo
+     */
+    private void handleRealDelFile(List<String> svnRepositoryHistory, List<String> deletes, int i, String svnInfo) {
+        if (svnInfo.startsWith("D /")) {
+            // svn已被删除的代码或者文件，转换成A / 在后面版本中查找是否增加
+            String addSvn = StringUtils.substringAfter(svnInfo, "D /");
+            addSvn = "A /" + addSvn;
+            boolean needDel = true;
+            for (int j = i; j < svnRepositoryHistory.size(); j++) {
+                String svn = svnRepositoryHistory.get(j);
+                if (svn.contains(addSvn)) {
+                    needDel = false;
+                    break;
+                }
+            }
+            if (needDel) {
+                deletes.add(svnInfo);
+            }
+        }
+    }
+
+    /**
+     * 处理复制或者移动后log带的原分支信息
+     *
+     * @param svn
+     * @return
+     */
+    private static String replaceInfo(String svn) {
+        // 处理类似这种
+        //"A /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.1/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml
+        //(from /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.0/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml:58651)";
+        if(!svn.contains(")")){
+            return svn;
+        }
+        String[] strings = StringUtils.substringsBetween(svn, "(", ")");
+        if(strings.length ==0){
+            svn = svn.replaceAll("\\(", "").replaceAll("\\)","");
+            return svn;
+        }
+        for (String string : strings) {
+            svn = svn.replaceAll("\\(" + string + "\\)", "");
+        }
+        return svn;
+    }
+
+    /**
+     * svn路径转换成war包内的路径
+     *
+     * @param svnFileInfo
+     * @return
+     */
+    public String svnPathToPathInWar(String svnFileInfo) {
+        // 替换无效路径，得到代码路径
+        // 非maven项目
+        if (!mavenProject) {
+            String localPath = handleNotMaven(svnFileInfo);
+            return localPath;
+        }
+        // maven项目
+        if (mavenProject) {
+            String localPath = handleMaven(svnFileInfo);
+            return localPath;
+        }
+        return "";
+    }
+
+    private String handleMaven(String svnFileInfo) {
+        String localPath = "";
+        // 跳过pom.xml
+        if (svnFileInfo.contains("pom.xml")) {
+            return localPath;
+        }
+        // 代码
+        if (svnFileInfo.contains("/src/main/java/") && svnFileInfo.endsWith(".java")) {
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
+            return localPath;
+        }
+        // 配置
+        if (svnFileInfo.contains("/src/main/resources/") && !svnFileInfo.endsWith(".java")) {
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/main/resources/");
+            return localPath;
+        }
+        // web资源
+        if (svnFileInfo.contains("/webapp/") && !svnFileInfo.endsWith(".java")) {
+            localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/webapp/");
+            return localPath;
+        }
+        return localPath;
+    }
+
+    private String handleNotMaven(String svnFileInfo) {
+        String localPath = "";
+        // 代码
+        if (svnFileInfo.contains("/src/") && svnFileInfo.endsWith(".java")) {
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
+            return localPath;
+        }
+        // 配置
+        if (svnFileInfo.contains("/config/") && !svnFileInfo.endsWith(".java")) {
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/config/");
+            return localPath;
+        }
+        // web资源
+        if (svnFileInfo.contains("/web/") && !svnFileInfo.endsWith(".java")) {
+            localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/web/");
+            return localPath;
+        }
+        return localPath;
+    }
+
+    /**
+     * 写文件
+     *
+     * @param listStr
+     */
+    public void writeListToFile(List<String> listStr) {
+        try {
+            File file = new File(deleteFilePath);
+            file.createNewFile();
+            FileUtils.write(file, "", false);
+            for (String str : listStr) {
+                FileUtils.write(file, str + line, true);
+            }
+        } catch (Exception e) {
+            log.error("writeListToFile error", e);
+        }
+    }
+}

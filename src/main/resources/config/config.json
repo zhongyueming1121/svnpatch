@@ -1,0 +1,44 @@
+{
+  "lastUseConfig": {
+    "targetPath": "h3",
+    "url": "p4",
+    "user": {
+      "userName": "33333",
+      "password": "TlnlQFateIOhYTx00f5yHQ\u003d\u003d"
+    },
+    "startVersion": "17",
+    "cmd": "3",
+    "mavenHome": "4",
+    "endVersion": "8",
+    "startDate": 0,
+    "endDate": 0
+  },
+  "targetPathHistories": [
+    "h3",
+    "h2"
+  ],
+  "urlHistories": [
+    "p4",
+    "p2"
+  ],
+  "cmdHistories": [
+    "3"
+  ],
+  "mavenHistories": [
+    "4"
+  ],
+  "userHistories": [
+    {
+      "userName": "33333",
+      "password": "TlnlQFateIOhYTx00f5yHQ\u003d\u003d"
+    },
+    {
+      "userName": "88",
+      "password": "IoKg29dny0w62vBr1+ibvg\u003d\u003d"
+    },
+    {
+      "userName": "66",
+      "password": "KCR3oZC6r0FuIVU5N8GOlA\u003d\u003d"
+    }
+  ]
+}
