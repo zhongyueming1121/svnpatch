@@ -201,7 +201,7 @@ public class AllUtils {
      * @return
      */
     public static String replaceFileSeparatorToLinux(String str) {
-        str = str.replaceAll(File.separator, "/");
+        str = str.replaceAll("\\\\", "/");
         return str;
     }
 
