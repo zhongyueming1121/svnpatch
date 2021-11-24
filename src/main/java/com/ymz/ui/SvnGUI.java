@@ -153,7 +153,7 @@ public class SvnGUI {
     private void placeComponents(JPanel panel) {
         panel.setLayout(null);
         // 项目路径
-        targetPathComponent(panel);
+        targetVersionComponent(panel);
         // url
         urlComponent(panel);
         // 账号密码
@@ -189,7 +189,7 @@ public class SvnGUI {
                 }
                 // 打增量包
                 log.info("开始打增量包");
-                MakeWarPatch.startMakeWar(config);
+                MakeWarPatch.startMake(config);
                 ConfigManager.writeConfig(getConfigJsonModel(config));
                 // 隐藏密码
                 String pwd = componentMap.get("pwd").getText();
@@ -220,7 +220,7 @@ public class SvnGUI {
                 config.setStartVersion("0");
                 config.setStartVersion("-1");
                 log.info("开始打全量包");
-                MakeWarPatch.startMakeWar(config);
+                MakeWarPatch.startMake(config);
                 ConfigManager.writeConfig(getConfigJsonModel(config));
                 // 隐藏密码
                 String pwd = componentMap.get("pwd").getText();
@@ -385,7 +385,6 @@ public class SvnGUI {
 
     private String checkInput(ConfigModel configModel) {
         ConfigUser user = configModel.getUser();
-        String targetPath = configModel.getTargetPath();
         String url = configModel.getUrl();
         String startVersion = configModel.getStartVersion();
         String endVersion = configModel.getEndVersion();
@@ -393,9 +392,6 @@ public class SvnGUI {
         long endDate = configModel.getEndDate();
         if (StringUtils.isBlank(url)) {
             return "svn/git地址不能为空";
-        }
-        if (StringUtils.isBlank(targetPath)) {
-            return "目标目录不能为空";
         }
         if (user == null) {
             return "账号密码不能为空";
@@ -408,7 +404,7 @@ public class SvnGUI {
         if (StringUtils.isBlank(password) || StringUtils.isBlank(AllUtils.aesDecrypt(password))) {
             return "密码不能为空";
         }
-        if(startVersion.length() > 0 && !AllUtils.isInteger(startVersion) && (!startVersion.contains(",") && !startVersion.contains("-"))){
+        if (startVersion.length() > 0 && !AllUtils.isInteger(startVersion) && (!startVersion.contains(",") && !startVersion.contains("-"))) {
             return "版本号格式错误";
         }
         if (((StringUtils.isBlank(startVersion) && StringUtils.isBlank(endVersion))) && (0 == startDate || endDate == 0)) {
@@ -423,7 +419,7 @@ public class SvnGUI {
      * @return
      */
     private ConfigModel getConfig() {
-        String dir = comboBoxMap.get("dir").getEditor().getItem().toString();
+        String version = componentMap.get("checkout_version").getText();
         String url = comboBoxMap.get("url").getEditor().getItem().toString();
         String userName = comboBoxMap.get("userName").getEditor().getItem().toString();
         String cmd = comboBoxMap.get("cmd").getEditor().getItem().toString();
@@ -434,12 +430,12 @@ public class SvnGUI {
         Date dateStart = dateTimePickerStart.getDate();
         Date dateEnd = dateTimePickerEnd.getDate();
         ConfigModel configModel = new ConfigModel();
-        configModel.setTargetPath(StringUtils.isBlank(dir) ? "" : dir);
         configModel.setUrl(StringUtils.isBlank(url) ? "" : url);
         configModel.setCmd(StringUtils.isBlank(cmd) ? "" : cmd);
         configModel.setMavenHome(StringUtils.isBlank(mavenHome) ? "" : mavenHome);
         configModel.setStartVersion(StringUtils.isBlank(startVersion) ? "" : startVersion);
         //configModel.setEndVersion(StringUtils.isBlank(endVersion) ? "" : endVersion);
+        configModel.setCheckoutVersion(StringUtils.isNotBlank(version) ? Integer.parseInt(version) : -1);
         configModel.setStartDate(dateStart == null ? 0L : dateStart.getTime());
         configModel.setEndDate(dateEnd == null ? 0L : dateEnd.getTime());
         ConfigUser configUser = new ConfigUser();
@@ -470,12 +466,6 @@ public class SvnGUI {
             return null;
         }
         configJsonModel.setLastUseConfig(config);
-        LinkedList<String> targetPathHistories = configJsonModel.getTargetPathHistories() == null ?
-                new LinkedList<>() : configJsonModel.getTargetPathHistories();
-        if (StringUtils.isNotBlank(config.getTargetPath())) {
-            targetPathHistories.remove(config.getTargetPath());
-            targetPathHistories.addFirst(config.getTargetPath());
-        }
         LinkedList<String> urlHistories = configJsonModel.getUrlHistories() == null ?
                 new LinkedList<>() : configJsonModel.getUrlHistories();
         if (StringUtils.isNotBlank(config.getUrl())) {
@@ -508,7 +498,6 @@ public class SvnGUI {
             mavenHistories.addFirst(config.getMavenHome());
         }
 
-        configJsonModel.setTargetPathHistories(targetPathHistories);
         configJsonModel.setUrlHistories(urlHistories);
         configJsonModel.setUserHistories(userHistories);
         configJsonModel.setCmdHistories(cmdHistories);
@@ -527,16 +516,6 @@ public class SvnGUI {
         startRevisionText.setText(currentConfig.getStartVersion());
         panel.add(startRevisionText);
         componentMap.put(startRevisionText.getName(), startRevisionText);
-
-        /*JLabel endRevisionLabel = new JLabel("结束版本：");
-        endRevisionLabel.setBounds(335, 180, 100, 30);
-        panel.add(endRevisionLabel);
-        JTextField endRevisionText = new JTextField(220);
-        endRevisionText.setName("endVersion");
-        endRevisionText.setBounds(420, 180, 200, 30);
-        endRevisionText.setText(currentConfig.getEndVersion());
-        panel.add(endRevisionText);
-        componentMap.put(endRevisionText.getName(), endRevisionText);*/
 
         JLabel startTime = new JLabel("开始时间：");
         startTime.setBounds(20, 220, 100, 30);
@@ -618,11 +597,11 @@ public class SvnGUI {
                     HashMap<String, String> svnAuth = Program.getSvnAuth();
                     String userName = svnAuth.get("userName");
                     String password = svnAuth.get("password");
-                    if(StringUtils.isNotBlank(userName) && StringUtils.isNotBlank(password)){
+                    if (StringUtils.isNotBlank(userName) && StringUtils.isNotBlank(password)) {
                         userHisComboBox.getEditor().setItem(userName);
                         userPwdText.setText(password);
                     }
-                }catch (Exception ee){
+                } catch (Exception ee) {
                     // ignore
                     log.error("读取账号密码失败");
                 }
@@ -660,7 +639,7 @@ public class SvnGUI {
 
         // svn/git单选按钮
         JLabel svnOrGitLabel = new JLabel("svn/git：");
-        svnOrGitLabel.setBounds(740, 60, 100, 30);
+        svnOrGitLabel.setBounds(240, 20, 100, 30);
         panel.add(svnOrGitLabel);
         // 创建两个单选按钮
         JRadioButton svnRadio = new JRadioButton("svn");
@@ -669,8 +648,8 @@ public class SvnGUI {
         gitRadio.setName("git");
         // todo git先屏蔽
         gitRadio.setEnabled(false);
-        svnRadio.setBounds(820, 60, 50, 30);
-        gitRadio.setBounds(890, 60, 50, 30);
+        svnRadio.setBounds(320, 20, 50, 30);
+        gitRadio.setBounds(390, 20, 50, 30);
         svnRadio.setContentAreaFilled(false);
         gitRadio.setContentAreaFilled(false);
         svnRadio.setFocusPainted(false);
@@ -687,34 +666,22 @@ public class SvnGUI {
         comRadioMap.put(gitRadio.getName(), gitRadio);
     }
 
-    private void targetPathComponent(JPanel panel) {
-        JLabel label = new JLabel("目标目录：");
-        label.setBounds(20, 20, 100, 30);
-        panel.add(label);
-        JComboBox<String> comboBox = new JComboBox<>();
-        comboBox.setName("dir");
-        comboBox.setEditable(true);
-        comboBox.setBounds(120, 20, 600, 30);
-        LinkedList<String> list = configJsonModel.getTargetPathHistories() == null ? new LinkedList<>() : configJsonModel.getTargetPathHistories();
-        if (list.isEmpty()) {
-            comboBox.addItem(defaultItem);
-        }
-        list.forEach(comboBox::addItem);
-        // 自定义悬浮框
-        comboBox.setRenderer(new JComboBoxRenderer());
-        comboBox.setSelectedIndex(0);
-        comboBoxMap.put(comboBox.getName(), comboBox);
-
-        //itemListener
-        ItemListener itemListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent arg0) {
-
-            }
-        };
-
-        comboBox.addItemListener(itemListener);
-        panel.add(comboBox);
+    /**
+     * 目标版本
+     *
+     * @param panel
+     */
+    private void targetVersionComponent(JPanel panel) {
+        JLabel patchPathLabel = new JLabel("checkout版本：");
+        patchPathLabel.setBounds(20, 20, 100, 30);
+        panel.add(patchPathLabel);
+        // 命令输入框
+        JTextField patchPathText = new JTextField(200);
+        patchPathText.setName("checkout_version");
+        patchPathText.setBounds(120, 20, 100, 30);
+        patchPathText.setText("");
+        panel.add(patchPathText);
+        componentMap.put(patchPathText.getName(), patchPathText);
     }
 
     private class Task extends Thread {

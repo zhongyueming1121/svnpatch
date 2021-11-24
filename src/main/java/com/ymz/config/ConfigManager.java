@@ -60,7 +60,6 @@ public class ConfigManager {
         }
         LinkedList<String> urlHistories = configJsonModel.getUrlHistories();
         LinkedList<ConfigUser> userHistories = configJsonModel.getUserHistories();
-        LinkedList<String> targetPathHistories = configJsonModel.getTargetPathHistories();
         LinkedList<String> cmdHistories = configJsonModel.getCmdHistories();
         LinkedList<String> mavenPathHistories = configJsonModel.getMavenHistories();
         for (; ; ) {
@@ -73,13 +72,6 @@ public class ConfigManager {
         for (; ; ) {
             if (userHistories.size() > 10) {
                 userHistories.removeLast();
-            } else {
-                break;
-            }
-        }
-        for (; ; ) {
-            if (targetPathHistories.size() > 10) {
-                targetPathHistories.removeLast();
             } else {
                 break;
             }
@@ -98,7 +90,6 @@ public class ConfigManager {
                 break;
             }
         }
-        configJsonModel.setTargetPathHistories(targetPathHistories);
         configJsonModel.setUrlHistories(urlHistories);
         configJsonModel.setUserHistories(userHistories);
         configJsonModel.setCmdHistories(cmdHistories);

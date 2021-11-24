@@ -10,7 +10,6 @@ import java.util.LinkedList;
  **/
 public class ConfigJsonModel {
     private ConfigModel lastUseConfig;
-    private LinkedList<String> targetPathHistories;
     private LinkedList<String> urlHistories;
     private LinkedList<String> cmdHistories;
     private LinkedList<String> mavenHistories;
@@ -22,14 +21,6 @@ public class ConfigJsonModel {
 
     public void setLastUseConfig(ConfigModel lastUseConfig) {
         this.lastUseConfig = lastUseConfig;
-    }
-
-    public LinkedList<String> getTargetPathHistories() {
-        return targetPathHistories;
-    }
-
-    public void setTargetPathHistories(LinkedList<String> targetPathHistories) {
-        this.targetPathHistories = targetPathHistories;
     }
 
     public LinkedList<String> getUrlHistories() {

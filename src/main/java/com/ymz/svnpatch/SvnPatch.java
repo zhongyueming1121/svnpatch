@@ -2,14 +2,20 @@ package com.ymz.svnpatch;
 
 import com.ymz.util.AllUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.*;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -43,11 +49,13 @@ public class SvnPatch {
      */
     public List<String> getSvnRepositoryHistory(String url, String user, String password, List<Integer> versions,
                                                 int startVersion, int endVersion, Date startDate, Date endDate) {
-        repository = doCreateSVNRepository(url, user, password.toCharArray());
+        if (repository == null) {
+            repository = doCreateSVNRepository(url, user, password.toCharArray());
+        }
         // 得到历史记录
         List<String> history = new ArrayList<>();
         try {
-            history = svnLogHistory(versions,startVersion, endVersion, startDate, endDate);
+            history = svnLogHistory(versions, startVersion, endVersion, startDate, endDate);
         } catch (Exception e) {
             log.error("getSvnRepositoryHistory error", e);
         }
@@ -162,5 +170,44 @@ public class SvnPatch {
             log.error("doCreateSVNRepository error", e);
         }
         return repository;
+    }
+
+    /**
+     * 根据提交版本拉文件
+     * @param version
+     * @param url
+     * @param path
+     * @param name
+     * @param pwd
+     * @return
+     */
+    public String checkOutByVersion(String version, String url, String path, String name, String pwd) {
+        try {
+            SVNClientManager ourClientManager;
+            //初始化支持svn://协议的库。 必须先执行此操作。
+            DAVRepositoryFactory.setup();
+            //相关变量赋值
+            SVNURL repositoryURL = SVNURL.parseURIEncoded(url);
+            DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
+            //实例化客户端管理类
+            ourClientManager = SVNClientManager.newInstance(options, name, pwd);
+            String dirName = StringUtils.substringAfterLast(url, "/");
+            File delteDir = new File(path + File.separator + dirName);
+            if (delteDir.exists() && delteDir.isDirectory()) {
+                FileUtils.forceDelete(delteDir);
+            }
+            path = path.replace("/", File.separator);
+            File dstPath = new File(path);
+            //通过客户端管理类获得updateClient类的实例。
+            SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
+            updateClient.setIgnoreExternals(false);
+            //执行check out 操作，返回工作副本的版本号。
+            long workingVersion = updateClient.doExport(repositoryURL, dstPath, SVNRevision.HEAD, SVNRevision.parse(version), "", true, SVNDepth.fromRecurse(false));
+            log.info("把版本：" + workingVersion + " check out 到目录：" + dstPath + "中。");
+            return dstPath.getPath();
+        } catch (Exception e) {
+            log.error("拉取代码失败", e);
+        }
+        return "";
     }
 }

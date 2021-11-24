@@ -26,6 +26,11 @@ public class PatchFileFilter {
     private String deleteFilePath = "E:\\jh\\del_eyes.txt";
     private static String line = System.getProperty("line.separator");
 
+    /**
+     * 过滤类
+     * @param mavenProject 暂时无用，备用
+     * @param deleteFilePath
+     */
     public PatchFileFilter(boolean mavenProject,String deleteFilePath) {
         this.mavenProject = mavenProject;
         this.deleteFilePath = deleteFilePath;
@@ -174,18 +179,45 @@ public class PatchFileFilter {
      * @return
      */
     public String svnPathToPathInWar(String svnFileInfo) {
-        // 替换无效路径，得到代码路径
-        // 非maven项目
-        if (!mavenProject) {
-            String localPath = handleNotMaven(svnFileInfo);
+        String localPath = "";
+        // 跳过pom.xml
+        if (svnFileInfo.contains("pom.xml")) {
             return localPath;
         }
-        // maven项目
-        if (mavenProject) {
-            String localPath = handleMaven(svnFileInfo);
+        // 代码
+        if (svnFileInfo.contains("/src/main/java/") && svnFileInfo.endsWith(".java")) {
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
             return localPath;
+        } else {
+            // 代码
+            if (svnFileInfo.contains("/src/") && svnFileInfo.endsWith(".java")) {
+                localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
+                return localPath;
+            }
         }
-        return "";
+        // 配置
+        if (svnFileInfo.contains("/src/main/resources/") && !svnFileInfo.endsWith(".java")) {
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/main/resources/");
+            return localPath;
+        } else {
+            // 配置
+            if (svnFileInfo.contains("/config/") && !svnFileInfo.endsWith(".java")) {
+                localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/config/");
+                return localPath;
+            }
+        }
+        // web资源
+        if (svnFileInfo.contains("/webapp/") && !svnFileInfo.endsWith(".java")) {
+            localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/webapp/");
+            return localPath;
+        } else {
+            // web资源
+            if (svnFileInfo.contains("/web/") && !svnFileInfo.endsWith(".java")) {
+                localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/web/");
+                return localPath;
+            }
+        }
+        return localPath;
     }
 
     private String handleMaven(String svnFileInfo) {

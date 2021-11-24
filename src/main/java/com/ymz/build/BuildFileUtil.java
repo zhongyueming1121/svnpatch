@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,8 +24,9 @@ public class BuildFileUtil {
      * @param rootPath
      * @return
      */
-    public File foundPomFile(String rootPath) {
-        List<File> files = AllUtils.foundFile(new File(rootPath), "pom.xml");
+    public static File foundPomFile(String rootPath) {
+        List<File> files = new ArrayList<>();
+        AllUtils.findFiles(rootPath, "pom.xml", files);
         for (File file : files) {
             try {
                 String fileXml = FileUtils.readFileToString(file, "utf-8");
@@ -45,8 +47,9 @@ public class BuildFileUtil {
      * @param rootPath
      * @return
      */
-    public File foundAntFile(String rootPath) {
-        List<File> files = AllUtils.foundFile(new File(rootPath), "build.xml");
+    public static File foundAntFile(String rootPath) {
+        List<File> files = new ArrayList<>();
+        AllUtils.findFiles(rootPath, "build.xml", files);
         for (File file : files) {
             try {
                 String fileXml = FileUtils.readFileToString(file, "utf-8");
@@ -67,9 +70,10 @@ public class BuildFileUtil {
      * @param rootPath
      * @return
      */
-    public List<File> foundWarFile(String rootPath) {
-        List<File> files = AllUtils.foundFile(new File(rootPath), ".war");
-        return files;
+    public static File foundWarFile(String rootPath) {
+        List<File> files = new ArrayList<>();
+        AllUtils.findFiles(rootPath, "*.war", files);
+        return files.get(0);
     }
 
 

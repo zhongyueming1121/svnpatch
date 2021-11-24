@@ -2,6 +2,7 @@ package com.ymz.util;
 
 import com.ymz.ui.SvnGUI;
 import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.ZipFile;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
@@ -200,7 +201,7 @@ public class AllUtils {
      * @return
      */
     public static String replaceFileSeparatorToLinux(String str) {
-        str = str.replaceAll("\\\\", "/");
+        str = str.replaceAll(File.separator, "/");
         return str;
     }
 
@@ -228,31 +229,6 @@ public class AllUtils {
         return result;
     }
 
-    /**
-     * 递归获取所有符合名称的文件
-     *
-     * @param folder
-     * @return
-     */
-    public static List<File> foundFile(File folder, String fileName) {
-        List<File> result = new ArrayList<>();
-        if (folder.isFile()) {
-            result.add(folder);
-        }
-        File[] subFolders = folder.listFiles();
-        if (subFolders != null) {
-            for (File file : subFolders) {
-                if (file.isFile()) {
-                    if (file.getName().endsWith(fileName)) {
-                        result.add(file);
-                    }
-                } else {
-                    result.addAll(getAllFiles(file));
-                }
-            }
-        }
-        return result;
-    }
 
     /**
      * 删除空文件夹
@@ -443,45 +419,130 @@ public class AllUtils {
         return true;
     }
 
-    /**
-     * 创建 war 文件
-     *
-     * @param sourceDir
-     */
-    public static boolean zipWar(Path sourceDir) {
-        sourceDir = sourceDir.toAbsolutePath();
-        String rootDir = sourceDir.toString();
-        log.debug("rootDir: " + rootDir);
-        rootDir = StringUtils.appendIfMissing(rootDir, File.separator);
-        Path warPath = sourceDir.getParent().resolve(StringUtils.appendIfMissing(sourceDir.getFileName().toString(), ".war"));
-        try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(warPath));
-             ArchiveOutputStream aos = new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.JAR, bos)) {
-            Iterator<File> files = FileUtils.iterateFiles(sourceDir.toFile(), null, true);
-            log.debug("rootDir: " + rootDir);
-            while (files.hasNext()) {
-                File file = files.next();
-                ZipArchiveEntry entry = new ZipArchiveEntry(file, StringUtils.remove(file.getAbsolutePath(), rootDir));
-                aos.putArchiveEntry(entry);
-                try (InputStream is = new FileInputStream(file)) {
-                    IOUtils.copy(is, aos);
-                }
-                aos.closeArchiveEntry();
-            }
-            aos.flush();
-            log.info("压缩war包成功：{}",warPath.toString());
-        } catch (IOException | ArchiveException e) {
-            log.error("pack war error", e);
-            return false;
-        }
-        return true;
-    }
-
 
     public static boolean isInteger(String str) {
         Pattern pattern = Pattern.compile("^[-+]?[\\d]*$");
         return pattern.matcher(str).matches();
     }
 
+    /**
+     * 代码目录
+     *
+     * @return
+     */
+    public static String getCodePath() {
+        return getJarPath() + File.separator + "code";
+    }
+
+    /**
+     * 增量包目录
+     *
+     * @return
+     */
+    public static String getPatchPath() {
+        return getJarPath() + File.separator + "patch";
+    }
+
+    /**
+     * 压缩文件夹中的文件
+     *
+     * @param srcPath
+     * @param dstPath
+     * @return
+     */
+    public static File zipFileInFolder(String srcPath, String dstPath) {
+        try {
+            File srcFolder = new File(srcPath);
+            File[] files = srcFolder.listFiles();
+            if (files == null || files.length == 0) {
+                return null;
+            }
+            ZipFile zipFile = new ZipFile(dstPath);
+            for (File file : files) {
+                if (file.isFile()) {
+                    zipFile.addFile(file);
+                } else if (file.isDirectory()) {
+                    zipFile.addFolder(file);
+                }
+            }
+            return zipFile.getFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 递归查找文件
+     *
+     * @param baseDirName    查找的文件夹路径
+     * @param targetFileName 需要查找的文件名
+     * @param fileList       查找到的文件集合
+     */
+    public static void findFiles(String baseDirName, String targetFileName, List<File> fileList) {
+
+        File baseDir = new File(baseDirName);        // 创建一个File对象
+        if (!baseDir.exists() || !baseDir.isDirectory()) {    // 判断目录是否存在
+            System.out.println("文件查找失败：" + baseDirName + "不是一个目录！");
+        }
+        String tempName = null;
+        //判断目录是否存在
+        File tempFile;
+        File[] files = baseDir.listFiles();
+        assert files != null;
+        for (File file : files) {
+            tempFile = file;
+            if (tempFile.isDirectory()) {
+                findFiles(tempFile.getAbsolutePath(), targetFileName, fileList);
+            } else if (tempFile.isFile()) {
+                tempName = tempFile.getName();
+                if (wildcardMatch(targetFileName, tempName)) {
+                    // 匹配成功，将文件名添加到结果集
+                    fileList.add(tempFile.getAbsoluteFile());
+                }
+            }
+        }
+    }
+
+    /**
+     * 通配符匹配
+     *
+     * @param pattern 通配符模式
+     * @param str     待匹配的字符串
+     * @return 匹配成功则返回true，否则返回false
+     */
+    private static boolean wildcardMatch(String pattern, String str) {
+        int patternLength = pattern.length();
+        int strLength = str.length();
+        int strIndex = 0;
+        char ch;
+        for (int patternIndex = 0; patternIndex < patternLength; patternIndex++) {
+            ch = pattern.charAt(patternIndex);
+            if (ch == '*') {
+                //通配符星号*表示可以匹配任意多个字符
+                while (strIndex < strLength) {
+                    if (wildcardMatch(pattern.substring(patternIndex + 1),
+                            str.substring(strIndex))) {
+                        return true;
+                    }
+                    strIndex++;
+                }
+            } else if (ch == '?') {
+                //通配符问号?表示匹配任意一个字符
+                strIndex++;
+                if (strIndex > strLength) {
+                    //表示str中已经没有字符匹配?了。
+                    return false;
+                }
+            } else {
+                if ((strIndex >= strLength) || (ch != str.charAt(strIndex))) {
+                    return false;
+                }
+                strIndex++;
+            }
+        }
+        return (strIndex == strLength);
+    }
 
 
 }

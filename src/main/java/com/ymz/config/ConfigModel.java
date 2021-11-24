@@ -8,10 +8,6 @@ package com.ymz.config;
  **/
 public class ConfigModel {
     /**
-     * 项目目标地址
-     */
-    private String targetPath = "";
-    /**
      * url
      */
     private String url = "";
@@ -52,13 +48,7 @@ public class ConfigModel {
 
     private String patchFilePath = "";
 
-    public String getTargetPath() {
-        return targetPath;
-    }
-
-    public void setTargetPath(String targetPath) {
-        this.targetPath = targetPath;
-    }
+    private Integer checkoutVersion;
 
     public String getUrl() {
         return url;
@@ -156,11 +146,18 @@ public class ConfigModel {
         this.patchFilePath = patchFilePath;
     }
 
+    public Integer getCheckoutVersion() {
+        return checkoutVersion;
+    }
+
+    public void setCheckoutVersion(Integer checkoutVersion) {
+        this.checkoutVersion = checkoutVersion;
+    }
+
     @Override
     public String toString() {
         return "ConfigModel{" +
-                "targetPath='" + targetPath + '\'' +
-                ", url='" + url + '\'' +
+                "url='" + url + '\'' +
                 ", user=" + user +
                 ", startVersion='" + startVersion + '\'' +
                 ", cmd='" + cmd + '\'' +
@@ -172,6 +169,7 @@ public class ConfigModel {
                 ", localWar=" + localWar +
                 ", logFrom=" + logFrom +
                 ", patchFilePath='" + patchFilePath + '\'' +
+                ", checkoutVersion=" + checkoutVersion +
                 '}';
     }
 }
