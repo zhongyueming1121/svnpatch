@@ -209,21 +209,6 @@
         </dependency>
     </dependencies>
 
-    <!--<repositories>
-        <repository>
-            <id>safedog-maven</id>
-            <name>safedog-maven</name>
-            <url>http://172.16.31.2:8082/repository/safedog-maven/</url>
-            <layout>default</layout>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>-->
-
     <build>
         <plugins>
             <!--使用jdk 1.8 -->
