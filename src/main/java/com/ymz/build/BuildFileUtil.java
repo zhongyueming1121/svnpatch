@@ -38,7 +38,7 @@ public class BuildFileUtil {
                 log.error("读取pom文件错误", e);
             }
         }
-        return null;
+        return files.get(0);
     }
 
     /**
@@ -61,7 +61,7 @@ public class BuildFileUtil {
                 log.error("读取build文件错误", e);
             }
         }
-        return null;
+        return files.get(0);
     }
 
     /**
