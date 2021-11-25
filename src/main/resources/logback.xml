@@ -11,6 +11,14 @@
             <pattern>%-5level %logger{50} - %msg%n</pattern>
         </encoder>
     </appender>
+    <appender name="GUI" class="com.ymz.ui.GuiLogAppender">
+        <!-- 包含系统打印 -->
+        <target>System.out</target>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
     <!-- 按照每天生成日志文件 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -32,7 +40,8 @@
 
     <!-- 日志输出级别 ，一定要把上边定义的appender 写在下面否者会导致日志文件生成不了，或者为空的日志文件-->
     <root level="INFO">
-        <appender-ref ref="STDOUT" />
+        <!--<appender-ref ref="STDOUT" />-->
+        <appender-ref ref="GUI" />
         <appender-ref ref="FILE" />
     </root>
 </configuration>

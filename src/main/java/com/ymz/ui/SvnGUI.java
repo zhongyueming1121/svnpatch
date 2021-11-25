@@ -22,6 +22,9 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 public class SvnGUI {
@@ -31,16 +34,17 @@ public class SvnGUI {
     private static HashMap<String, ConfigUser> configUserMap = new HashMap<>();
     private static DateTimePicker dateTimePickerStart = null;
     private static DateTimePicker dateTimePickerEnd = null;
-    private JProgressBar progressBar;
-    private Task task;
-    private MyJTextArea outputTextArea;
+    public static JProgressBar progressBar;
+    private static Executor executor = Executors.newFixedThreadPool(1);
+    private static MyJTextArea outputTextArea;
+    private static JScrollPane scrollPane;
     private static String defaultItem = "";
     private static String defaultPwd = "******";
-    public static int count = 0;
     private static ConfigModel currentConfig;
     private static HashMap<String, JTextField> componentMap = new HashMap<>();
     private static HashMap<String, JComboBox<String>> comboBoxMap = new HashMap<>();
     private static HashMap<String, JRadioButton> comRadioMap = new HashMap<>();
+    public static LinkedBlockingQueue<String> logQueue = new LinkedBlockingQueue<>(600);
 
     /**
      * 初始化配置文件
@@ -97,8 +101,7 @@ public class SvnGUI {
         outputTextArea.setLineWrap(true);
         outputTextArea.setWrapStyleWord(true);
         outputTextArea.setFont(new Font("宋体", Font.PLAIN, 12));
-        //outputTextArea.setDocument(new LimitLineDocument(outputTextArea,500));
-        JScrollPane scrollPane = new JScrollPane(outputTextArea);
+        scrollPane = new JScrollPane(outputTextArea);
         scrollPane.setBounds(20, 360, 940, 240);
 
         progressBar = new JProgressBar(0, 100);
@@ -109,6 +112,32 @@ public class SvnGUI {
         panel.add(progressBar);
         panel.add(scrollPane);
         mainFrame.add(panel);
+        outInfo();
+        executor.execute(this::showLog);
+    }
+
+    private void outInfo() {
+        outputTextArea.append("[1] checkout版本默认最新版本\n");
+        outputTextArea.append("[2] ant编译命令需以ant开头，例如：ant release\n");
+        outputTextArea.append("[3] maven home格式，例如：D:\\apache-maven-3.6.3\n");
+        outputTextArea.append("--------------------------------------------------\n");
+        outputTextArea.append("//      ┏┛ ┻━━┛ ┻┓\n");
+        outputTextArea.append("//      ┃　　　　　　 ┃ \n");
+        outputTextArea.append("//      ┃　　　━　　  ┃\n");
+        outputTextArea.append("//      ┃　┳┛　 ┗┳　┃\n");
+        outputTextArea.append("//      ┃　　　　　　 ┃\n");
+        outputTextArea.append("//      ┃　　　┻　　　┃\n");
+        outputTextArea.append("//      ┃　　　　　　 ┃  \n");
+        outputTextArea.append("//      ┗━┓　　　┏━┛ \n");
+        outputTextArea.append("//        ┃　　　┃   神兽保佑     \n");
+        outputTextArea.append("//        ┃　　　┃   代码无BUG！  \n");
+        outputTextArea.append("//        ┃　　　┗━━━━━┓     \n");
+        outputTextArea.append("//        ┃　　　　　　　      ┣┓  \n");
+        outputTextArea.append("//        ┃　　　　          ┏┛  \n");
+        outputTextArea.append("//        ┗━┓ ┓ ┏━┳ ┓ ┏━┛     \n");
+        outputTextArea.append("//          ┃ ┫ ┫   ┃ ┫ ┫      \n");
+        outputTextArea.append("//          ┗━┻━┛   ┗━┻━┛      \n");
+        outputTextArea.append("--------------------------------------------------\n");
     }
 
     /**
@@ -178,7 +207,7 @@ public class SvnGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 log.info("你按下了" + patchBuildButton.getText());
-                log.info("===============================");
+                progressBar.setValue(10);
                 ConfigModel config = getConfig();
                 //log.info("config:{}", config.toString());
                 String checkInput = checkInput(config);
@@ -187,9 +216,19 @@ public class SvnGUI {
                     JOptionPane.showMessageDialog(panel, checkInput);
                     return;
                 }
+                progressBar.setValue(20);
                 // 打增量包
                 log.info("开始打增量包");
-                MakeWarPatch.startMake(config);
+                try {
+                    boolean success = new MakeWarPatch().startMake(config, false);
+                    if (success) {
+                        SvnGUI.progressBar.setValue(100);
+                    }
+                    //JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
+                } catch (Exception ee) {
+                    log.error("打包失败", ee);
+                    JOptionPane.showMessageDialog(panel, "打包失败");
+                }
                 ConfigManager.writeConfig(getConfigJsonModel(config));
                 // 隐藏密码
                 String pwd = componentMap.get("pwd").getText();
@@ -207,7 +246,6 @@ public class SvnGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 log.info("你按下了" + warBuildButton.getText());
-                log.info("===============================");
                 ConfigModel config = getConfig();
                 //log.info("config:{}", config.toString());
                 String checkInput = checkInput(config);
@@ -220,7 +258,16 @@ public class SvnGUI {
                 config.setStartVersion("0");
                 config.setStartVersion("-1");
                 log.info("开始打全量包");
-                MakeWarPatch.startMake(config);
+                try {
+                    boolean success = new MakeWarPatch().startMake(config, true);
+                    if (success) {
+                        SvnGUI.progressBar.setValue(100);
+                    }
+                    JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
+                } catch (Exception ee) {
+                    log.error("打包失败", ee);
+                    JOptionPane.showMessageDialog(panel, "打包失败");
+                }
                 ConfigManager.writeConfig(getConfigJsonModel(config));
                 // 隐藏密码
                 String pwd = componentMap.get("pwd").getText();
@@ -452,9 +499,9 @@ public class SvnGUI {
         JRadioButton svn = comRadioMap.get("svn");
         JRadioButton localWar = comRadioMap.get("localWar");
         JRadioButton svnLog = comRadioMap.get("svnLog");
-        configModel.setSvnOrGit(svn.isSelected() ? 0 : 1);
-        configModel.setLocalWar(localWar.isSelected() ? 0 : 1);
-        configModel.setLogFrom(svnLog.isSelected() ? 0 : 1);
+        configModel.setSvnOrGit(svn.isSelected() ? 1 : 0);
+        configModel.setLocalWar(localWar.isSelected() ? 1 : 0);
+        configModel.setLogFrom(svnLog.isSelected() ? 1 : 0);
 
         JTextField patchPath = componentMap.get("patchPath");
         configModel.setPatchFilePath(StringUtils.isBlank(patchPath.getText()) ? "" : patchPath.getText());
@@ -588,9 +635,6 @@ public class SvnGUI {
         loadPad.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String text = loadPad.getText();
-                //userNameText.setText(text);
-                userPwdText.setText(text);
                 log.info("你按下了" + loadPad.getText());
                 // 读取密码
                 try {
@@ -600,10 +644,12 @@ public class SvnGUI {
                     if (StringUtils.isNotBlank(userName) && StringUtils.isNotBlank(password)) {
                         userHisComboBox.getEditor().setItem(userName);
                         userPwdText.setText(password);
+                    } else {
+                        userPwdText.setText("");
                     }
                 } catch (Exception ee) {
                     // ignore
-                    log.error("读取账号密码失败");
+                    log.error("读取账号密码失败",ee);
                 }
 
             }
@@ -684,28 +730,26 @@ public class SvnGUI {
         componentMap.put(patchPathText.getName(), patchPathText);
     }
 
-    private class Task extends Thread {
-        public Task() {
-        }
-
-        public void run() {
-            for (int i = 0; i <= 1000; i += 1) {
-                final int progress = i;
-
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        progressBar.setValue(progress);
-                        //outputTextArea.setText(outputTextArea.getText() + String.format("任务已完成 %d%% .\n", progress));
-                        outputTextArea.append("任务已完成:" + count + "\n", 100);
-                        count++;
-                    }
-                });
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                }
+    /**
+     * 显示日志
+     */
+    private void showLog() {
+        for (; ; ) {
+            try {
+                outputTextArea.append(logQueue.take());
+                outputTextArea.append("\n");
+                //使垂直滚动条自动向下滚动
+                scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            try {
+                Thread.sleep(100);
+            } catch (Exception ee) {
+                ee.printStackTrace();
             }
         }
     }
+
 }
 

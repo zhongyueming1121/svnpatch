@@ -24,7 +24,7 @@ public class BuildFileUtil {
      * @param rootPath
      * @return
      */
-    public static File foundPomFile(String rootPath) {
+    public static File searchPomFile(String rootPath) {
         List<File> files = new ArrayList<>();
         AllUtils.findFiles(rootPath, "pom.xml", files);
         for (File file : files) {
@@ -47,7 +47,7 @@ public class BuildFileUtil {
      * @param rootPath
      * @return
      */
-    public static File foundAntFile(String rootPath) {
+    public static File searchAntFile(String rootPath) {
         List<File> files = new ArrayList<>();
         AllUtils.findFiles(rootPath, "build.xml", files);
         for (File file : files) {
@@ -70,7 +70,7 @@ public class BuildFileUtil {
      * @param rootPath
      * @return
      */
-    public static File foundWarFile(String rootPath) {
+    public static File searchWarFile(String rootPath) {
         List<File> files = new ArrayList<>();
         AllUtils.findFiles(rootPath, "*.war", files);
         return files.get(0);

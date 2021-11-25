@@ -24,7 +24,7 @@ public class AntBuild {
      * @param targetName target名称
      * @return
      */
-    public static boolean executeAntBuild(File buildFile, String targetName) {
+    public boolean executeAntBuild(File buildFile, String targetName) {
         Project project = new Project();
         if (StringUtils.isBlank(targetName)) {
             log.error("Ant targetName不能为空");

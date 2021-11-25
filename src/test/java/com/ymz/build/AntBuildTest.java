@@ -13,6 +13,6 @@ public class AntBuildTest extends TestCase {
     public void testExecuteAntBuild() {
         File buildFile = new File("G:\\Code\\test\\build.xml");
         String targetName = "release-test";
-        AntBuild.executeAntBuild(buildFile,targetName);
+        new AntBuild().executeAntBuild(buildFile,targetName);
     }
 }

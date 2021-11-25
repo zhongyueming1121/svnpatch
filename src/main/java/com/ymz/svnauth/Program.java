@@ -42,6 +42,7 @@ public class Program {
 
     /**
      * 获取svn账号密码
+     *
      * @return
      */
     public static HashMap<String, String> getSvnAuth() {
@@ -53,14 +54,16 @@ public class Program {
         // Look for password files
         String folder = java.nio.file.Paths.get(System.getenv("APPDATA")).resolve(AUTHFILE_SUBPATH).toString();
         if (!(new File(folder)).isDirectory()) {
-            ExitWithError("Path not found: " + folder);
+            log.error("Path not found: " + folder);
+            return info;
         }
 
         //String[] files = Directory.GetFiles(folder, new String('?', 32)); // Password filenames appear to be 32 characters in length
         File file = new File(folder);
         File[] files = file.listFiles((path, name) -> name.length() == 32);
         if (files.length < 1) {
-            ExitWithError("No files with exactly 32 characters in the filename found in " + folder);
+            log.error("No files with exactly 32 characters in the filename found in " + folder);
+            return info;
         }
 
         log.info("Found {} cached credentials files in {}}", files.length, folder);
@@ -70,7 +73,8 @@ public class Program {
         for (int i = 0; i < files.length; i++) {
 
             if (i > MAX_FILES_COUNT) {
-                ExitWithError("Listing aborted.  Too many files in " + folder, ERROR_TOOMANY);
+                log.error("Listing aborted.  Too many files in " + folder, ERROR_TOOMANY);
+                return info;
             }
 
             log.info("Parsing " + (files[i].getName()));
@@ -113,14 +117,6 @@ public class Program {
         return String.format("%1$s.%2$s.%3$s", osName, osArch, osVersion);
     }
 
-    private static void ExitWithError(String error) {
-        ExitWithError(error, GENERAL_ERROR);
-    }
-
-    private static void ExitWithError(String error, int errorCode) {
-        log.info(error);
-        System.exit(errorCode);
-    }
 
     private static boolean TryParseAuthFile(String path, RefObject<String> username, RefObject<String> repository, RefObject<String> encryptedPassword) {
 
@@ -149,7 +145,7 @@ public class Program {
             }
             return true;
         } catch (AuthParseException | IOException e) {
-            log.info(e.getMessage());
+            log.error("TryParseAuthFile error", e);
             return false;
         }
 
@@ -164,7 +160,7 @@ public class Program {
             decrypted.argValue = Native.toString(unprotectedData);
             return true;
         } catch (RuntimeException e) {
-            log.info("Unable to decrypt the password",e);
+            log.error("Unable to decrypt the password", e);
             return false;
         }
     }

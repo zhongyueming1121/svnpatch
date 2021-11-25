@@ -179,12 +179,11 @@ public class SvnPatch {
      *
      * @param version
      * @param url
-     * @param path
      * @param name
      * @param pwd
      * @return
      */
-    public String checkOutByVersion(String version, String url, String path, String name, String pwd) {
+    public String checkOutByVersion(String version, String url, String name, String pwd) {
         try {
             SVNClientManager ourClientManager;
             //初始化支持svn://协议的库。 必须先执行此操作。
@@ -195,11 +194,12 @@ public class SvnPatch {
             //实例化客户端管理类
             ourClientManager = SVNClientManager.newInstance(options, name, pwd);
             String dirName = StringUtils.substringAfterLast(url, "/");
-            File delteDir = new File(path + File.separator + dirName);
+            String basePath = AllUtils.getCodePath();
+            File delteDir = new File(basePath + File.separator + dirName);
             if (delteDir.exists() && delteDir.isDirectory()) {
                 FileUtils.forceDelete(delteDir);
             }
-            File dstPath = new File(path + File.separator + dirName);
+            File dstPath = new File(basePath + File.separator + dirName);
             //通过客户端管理类获得updateClient类的实例。
             SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
             updateClient.setIgnoreExternals(false);
@@ -211,7 +211,7 @@ public class SvnPatch {
         } catch (Exception e) {
             log.error("拉取代码失败", e);
         }
-        return "";
+        return null;
     }
 
 

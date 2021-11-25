@@ -45,7 +45,7 @@ public class PatchFileFilter {
     public void filterAndDel(List<String> history, String rootPath) {
         int needClean = 0;
         // 转换为war包内地址(linux 斜杠)
-        Set<String> fileInWarPath = transferPathInWarLinuxSeparator(history);
+        Set<String> fileInWarPath = transferLinuxPathInWar(history);
         log.info("fileInWarPath:{}",fileInWarPath.toString());
         if(fileInWarPath.isEmpty()){
             return;
@@ -69,7 +69,7 @@ public class PatchFileFilter {
             // 判断要不要保留
             if(!fileInWarPath.contains(localFilePathInWar)){
                 FileUtils.deleteQuietly(file);
-                log.info("del: {}",localFilePathInWar);
+                log.debug("del: {}",localFilePathInWar);
             } else {
                 log.info("保留文件:{}",file.getPath());
             }
@@ -84,7 +84,7 @@ public class PatchFileFilter {
      * @param svnRepositoryHistory
      * @return
      */
-    public Set<String> transferPathInWarLinuxSeparator(List<String> svnRepositoryHistory) {
+    public Set<String> transferLinuxPathInWar(List<String> svnRepositoryHistory) {
         List<String> returnPathInWar = new ArrayList<>();
         // svn已被删除的文件，需要特殊处理
         List<String> deletes = new ArrayList<>();

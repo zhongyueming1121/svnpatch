@@ -5,10 +5,12 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 /**
+ * 限制行数的输出
  * @author: ymz
  * @date: 2021-08-21 04:22
  **/
 public class MyJTextArea extends JTextArea {
+    int limitLine = 500;
     public MyJTextArea() {
         super();
     }
@@ -40,7 +42,8 @@ public class MyJTextArea extends JTextArea {
      * @param str the text to insert
      * @see #insert
      */
-    public void append(String str, int limitLine) {
+    @Override
+    public void append(String str) {
         if(limitLine<20){
             limitLine = 20;
         }
@@ -52,8 +55,6 @@ public class MyJTextArea extends JTextArea {
                     int lineStartOffset = getLineStartOffset(0);
                     int lineEndOffset = getLineEndOffset(10);
                     doc.remove(lineStartOffset, lineEndOffset);
-                    int lineCount2 = getLineCount();
-                    System.out.println("行数："+lineCount + "->" + lineCount2);
                 }
                 doc.insertString(doc.getLength(), str, null);
             } catch (BadLocationException e) {

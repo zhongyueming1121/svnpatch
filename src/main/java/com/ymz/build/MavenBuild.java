@@ -4,9 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,10 +24,10 @@ public class MavenBuild {
      * @param cmd
      * @return
      */
-    public static boolean buildWithMaven(String codePath, String mavenHome, String cmd) {
+    public boolean buildWithMaven(String codePath, String mavenHome, String cmd) {
         String javaHome = System.getenv("JAVA_HOME");
         log.info("JAVA_HOME:{}", javaHome);
-        File pomFile = BuildFileUtil.foundPomFile(codePath);
+        File pomFile = BuildFileUtil.searchPomFile(codePath);
         assert pomFile != null;
         log.info("pom path:{}", pomFile.getPath());
         return buildWithMaven(pomFile.getPath(), javaHome, mavenHome, Arrays.asList(cmd.split(" ")));
@@ -43,7 +41,7 @@ public class MavenBuild {
      * @param cmd
      * @return
      */
-    private static boolean buildWithMaven(String pomPath, String javaHome, String mavenHome, List<String> cmd) {
+    private boolean buildWithMaven(String pomPath, String javaHome, String mavenHome, List<String> cmd) {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(new File(pomPath));
         request.setGoals(cmd);
