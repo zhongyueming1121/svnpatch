@@ -5,7 +5,9 @@ import org.apache.maven.shared.invoker.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * maven打包
@@ -15,6 +17,7 @@ import java.util.Collections;
  **/
 @Slf4j
 public class MavenBuild {
+    private static final List<String> PUBLISH_GOALS = Arrays.asList("clean", "package", "-DskipTests");
 
     /**
      * maven打包
@@ -29,7 +32,7 @@ public class MavenBuild {
         File pomFile = BuildFileUtil.foundPomFile(codePath);
         assert pomFile != null;
         log.info("pom path:{}", pomFile.getPath());
-        return buildWithMaven(pomFile.getPath(), javaHome, mavenHome, cmd);
+        return buildWithMaven(pomFile.getPath(), javaHome, mavenHome, Arrays.asList(cmd.split(" ")));
     }
 
     /**
@@ -40,10 +43,10 @@ public class MavenBuild {
      * @param cmd
      * @return
      */
-    private static boolean buildWithMaven(String pomPath, String javaHome, String mavenHome, String cmd) {
+    private static boolean buildWithMaven(String pomPath, String javaHome, String mavenHome, List<String> cmd) {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(new File(pomPath));
-        request.setGoals(Collections.singletonList(cmd));
+        request.setGoals(cmd);
         request.setJavaHome(new File(javaHome));
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(new File(mavenHome));

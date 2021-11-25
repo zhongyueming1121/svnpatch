@@ -20,8 +20,8 @@ public class AntBuild {
     /**
      * 执行Ant打包任务
      *
-     * @param buildFile
-     * @param targetName
+     * @param buildFile buildFile路径
+     * @param targetName target名称
      * @return
      */
     public static boolean executeAntBuild(File buildFile, String targetName) {

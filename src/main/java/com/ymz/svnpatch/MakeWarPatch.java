@@ -39,10 +39,12 @@ public class MakeWarPatch {
         log.info("svn:{}", url);
         // 拉取代码和编译解压
         unzipWarDstDir = checkoutAndUnzipWar(config, cmd, url, mavenHome, user, pwd, codePath);
+        log.info("unzipWarDstDir:{}", unzipWarDstDir);
         // 过滤删除代码
         filterAndDel(config, unzipWarDstDir, url, user, pwd);
         // 压缩增量包
         String zipPath = unzipWarDstDir + File.separator + StringUtils.substringAfterLast(unzipWarDstDir, File.separator) + ".zip";
+        log.info("zipPath:{}", zipPath);
         AllUtils.zipFileInFolder(unzipWarDstDir, zipPath);
     }
 
@@ -58,55 +60,59 @@ public class MakeWarPatch {
      * @param codePath
      * @return
      */
-    private static String checkoutAndUnzipWar(ConfigModel config, String cmd, String url, String mavenHome, String user, String pwd, String codePath) {
+    public static String checkoutAndUnzipWar(ConfigModel config, String cmd, String url, String mavenHome, String user, String pwd, String codePath) {
         String unzipWarDstDir;// 本地war包
         int localWar = config.getLocalWar();
+        String projectName = StringUtils.substringAfterLast(url, "/");
+        String warDstPath = AllUtils.getPatchPath() + File.separator + projectName;
         if (localWar == 1) {
             String warPath = config.getMavenHome();
             File warFile = new File(warPath);
-            unzipWarDstDir = unzipWarFile(warFile);
+            unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
         } else {
-            boolean isMaven = StringUtils.isNotBlank(cmd) && cmd.contains("mvn");
+            boolean isMaven = StringUtils.isNotBlank(cmd) && !cmd.contains("ant");
             // 开始拉取代码
             SvnPatch svnPatch = new SvnPatch();
             String outPath = svnPatch.checkOutByVersion(config.getCheckoutVersion() + "", url, codePath, user, pwd);
             // 开始编译代码
-            if(isMaven) {
+            if (isMaven) {
                 // maven
                 MavenBuild.buildWithMaven(outPath, mavenHome, cmd);
+            } else {
+                // ant
+
             }
             // 解压war包
             File warFile = BuildFileUtil.foundWarFile(outPath);
             assert warFile != null;
-            unzipWarDstDir = unzipWarFile(warFile);
+            unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
         }
         return unzipWarDstDir;
     }
 
-    private static void filterAndDel(ConfigModel config, String unzipWarDstDir, String url, String user, String pwd) {
+    public static void filterAndDel(ConfigModel config, String unzipWarDstDir, String url, String user, String pwd) {
         SvnPatch svnPatch = new SvnPatch();
         log.info("目标地址:{}", unzipWarDstDir);
         String deleteFilePath = unzipWarDstDir + File.separator + "del_files.log";
         log.info("版本删除文件日志路径:{}", deleteFilePath);
         List<Integer> versions = new ArrayList<>();
         String versionStr = config.getStartVersion();
-        int startVersion = 0;
-        int endVersion = 0;
-        if (versionStr.contains(",")) {
-            versions = Arrays.stream(versionStr.split(",")).mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
-            log.info("版本号:{}", versions.toString());
-        } else if (versionStr.contains("-")) {
-            startVersion = Integer.parseInt(versionStr.split("-")[0]);
-            endVersion = Integer.parseInt(versionStr.split("-")[1]);
-            log.info("版本号:{}-{}", startVersion, endVersion);
-        } else {
-            startVersion = Integer.parseInt(config.getStartVersion());
-            endVersion = startVersion == 0 ? Integer.parseInt(config.getEndVersion()) : startVersion;
-            log.info("版本号:{}-{}", startVersion, endVersion);
+        boolean versionRange = false;
+        if (StringUtils.isNotBlank(versionStr)) {
+            if (versionStr.contains(",")) {
+                versions = Arrays.stream(versionStr.split(",")).mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+                log.info("版本号:{}", versions.toString());
+            } else if (versionStr.contains("-")) {
+                String startVersion = versionStr.split("-")[0];
+                String endVersion = versionStr.split("-")[1];
+                log.info("版本号:{}-{}", startVersion, endVersion);
+                versionRange = true;
+            }
         }
         Date startDate = null;
         Date endDate = null;
-        List<String> svnRepositoryHistory = svnPatch.getSvnRepositoryHistory(url, user, pwd, versions, startVersion, endVersion, startDate, endDate);
+        List<String> svnRepositoryHistory = svnPatch.getSvnRepositoryHistory(url, user, pwd, versions, versionRange, startDate, endDate);
+        log.info("svnRepositoryHistory:{}",svnRepositoryHistory.toString());
         PatchFileFilter patchFileFilter = new PatchFileFilter(true, deleteFilePath);
         patchFileFilter.filterAndDel(svnRepositoryHistory, unzipWarDstDir);
         log.info("处理完毕，输出文件夹位置：{}", unzipWarDstDir);
@@ -117,21 +123,19 @@ public class MakeWarPatch {
      *
      * @param warFile
      */
-    private static String unzipWarFile(File warFile) {
-        String unzipWarDstPath = AllUtils.getPatchPath() + File.separator + StringUtils.substringAfterLast(warFile.getPath(), File.separator);
-        File unzipWarDstDir = new File(unzipWarDstPath);
-        if (unzipWarDstDir.exists() && unzipWarDstDir.isDirectory()) {
+    private static String unzipWarFile(File warFile, File dstPath) {
+        if (dstPath.exists() && dstPath.isDirectory()) {
             try {
-                FileUtils.forceDelete(unzipWarDstDir);
+                FileUtils.forceDelete(dstPath);
             } catch (IOException e) {
                 log.error("del unzipWarDstPath error", e);
             }
         } else {
-            unzipWarDstDir.mkdir();
+            dstPath.mkdir();
         }
-        log.info("开始解压war包{}到{}", warFile.getPath(), unzipWarDstDir.getPath());
-        boolean unzipWar = AllUtils.unzipWar(warFile, unzipWarDstDir.getPath());
+        log.info("开始解压war包{}到{}", warFile.getPath(), dstPath.getPath());
+        boolean unzipWar = AllUtils.unzipWar(warFile, dstPath.getPath());
         log.info("解压war包{}", unzipWar ? "成功" : "失败");
-        return unzipWarDstDir.getPath();
+        return dstPath.getPath();
     }
 }

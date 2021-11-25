@@ -46,6 +46,7 @@ public class PatchFileFilter {
         int needClean = 0;
         // 转换为war包内地址(linux 斜杠)
         Set<String> fileInWarPath = transferPathInWarLinuxSeparator(history);
+        log.info("fileInWarPath:{}",fileInWarPath.toString());
         if(fileInWarPath.isEmpty()){
             return;
         }
@@ -54,7 +55,8 @@ public class PatchFileFilter {
         String parentName = StringUtils.substringAfterLast(rootPath, File.separator);
         for (File file : allFiles) {
             // 判断是否spring.components文件
-            if(file.getPath().endsWith("spring.components") || file.getPath().endsWith("build_version.properties")){
+            if(file.getPath().endsWith("spring.components") || file.getPath().endsWith("build_version.properties")
+                    || file.getPath().endsWith("MANIFEST.MF")){
                 log.info("保留特殊文件:{}",file.getPath());
                 continue;
             }
@@ -67,18 +69,13 @@ public class PatchFileFilter {
             // 判断要不要保留
             if(!fileInWarPath.contains(localFilePathInWar)){
                 FileUtils.deleteQuietly(file);
-                needClean ++;
-                log.debug("del: {}",localFilePathInWar);
+                log.info("del: {}",localFilePathInWar);
             } else {
-                needClean ++;
                 log.info("保留文件:{}",file.getPath());
             }
         }
-        // 有删除有保留才清理空文件夹
-        if(needClean == 2) {
-            log.info("清除空文件夹");
-            AllUtils.clearEmptyDir(rootFilePath);
-        }
+        log.info("清除空文件夹");
+        AllUtils.clearEmptyDir(rootFilePath);
     }
 
     /**
@@ -186,7 +183,7 @@ public class PatchFileFilter {
         }
         // 代码
         if (svnFileInfo.contains("/src/main/java/") && svnFileInfo.endsWith(".java")) {
-            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
+            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/java/");
             return localPath;
         } else {
             // 代码
@@ -216,50 +213,6 @@ public class PatchFileFilter {
                 localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/web/");
                 return localPath;
             }
-        }
-        return localPath;
-    }
-
-    private String handleMaven(String svnFileInfo) {
-        String localPath = "";
-        // 跳过pom.xml
-        if (svnFileInfo.contains("pom.xml")) {
-            return localPath;
-        }
-        // 代码
-        if (svnFileInfo.contains("/src/main/java/") && svnFileInfo.endsWith(".java")) {
-            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
-            return localPath;
-        }
-        // 配置
-        if (svnFileInfo.contains("/src/main/resources/") && !svnFileInfo.endsWith(".java")) {
-            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/main/resources/");
-            return localPath;
-        }
-        // web资源
-        if (svnFileInfo.contains("/webapp/") && !svnFileInfo.endsWith(".java")) {
-            localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/webapp/");
-            return localPath;
-        }
-        return localPath;
-    }
-
-    private String handleNotMaven(String svnFileInfo) {
-        String localPath = "";
-        // 代码
-        if (svnFileInfo.contains("/src/") && svnFileInfo.endsWith(".java")) {
-            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/src/");
-            return localPath;
-        }
-        // 配置
-        if (svnFileInfo.contains("/config/") && !svnFileInfo.endsWith(".java")) {
-            localPath = "/WEB-INF/classes/" + StringUtils.substringAfter(svnFileInfo, "/config/");
-            return localPath;
-        }
-        // web资源
-        if (svnFileInfo.contains("/web/") && !svnFileInfo.endsWith(".java")) {
-            localPath = "/" + StringUtils.substringAfter(svnFileInfo, "/web/");
-            return localPath;
         }
         return localPath;
     }
