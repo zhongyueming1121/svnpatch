@@ -37,6 +37,11 @@ public class ConfigManager {
         String configPath = getConfigPath();
         StringBuilder jsonBuilder = new StringBuilder();
         try {
+            File file = new File(configPath);
+            if (!file.exists()) {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            }
             Files.lines(Paths.get(configPath), StandardCharsets.UTF_8).forEach(jsonBuilder::append);
         } catch (IOException e) {
             log.error("读取配置文件失败", e);
@@ -131,15 +136,16 @@ public class ConfigManager {
      */
     private static String getConfigPath() {
         String path = SvnGUI.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+        log.debug("config path:{}", path);
         try {
+            path = StringUtils.substringBeforeLast(path, "/");
             path = java.net.URLDecoder.decode(path, "UTF-8");
-            path = StringUtils.substringBeforeLast(path, File.separator);
-            path = path + configDirName + File.separator + configFileName;
+            path = path + File.separator + configDirName + File.separator + configFileName;
             path = AllUtils.replaceFileSeparatorToLinux(path);
             if (path.startsWith("/")) {
                 path = StringUtils.substringAfter(path, "/");
             }
-            //log.info("配置文件路径：{}", path);
+            log.debug("配置文件路径：{}", path);
         } catch (UnsupportedEncodingException e) {
             log.error("获取配置文件路径失败", e);
         }
