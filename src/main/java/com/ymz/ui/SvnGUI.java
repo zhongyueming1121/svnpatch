@@ -223,17 +223,17 @@ public class SvnGUI {
                     boolean success = new MakeWarPatch().startMake(config, false);
                     if (success) {
                         SvnGUI.progressBar.setValue(100);
+                        ConfigManager.writeConfig(getConfigJsonModel(config));
+                        // 隐藏密码
+                        String pwd = componentMap.get("pwd").getText();
+                        if (StringUtils.isNotBlank(pwd)) {
+                            componentMap.get("pwd").setText(defaultPwd);
+                        }
                     }
-                    //JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
+                    JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
                 } catch (Exception ee) {
                     log.error("打包失败", ee);
                     JOptionPane.showMessageDialog(panel, "打包失败");
-                }
-                ConfigManager.writeConfig(getConfigJsonModel(config));
-                // 隐藏密码
-                String pwd = componentMap.get("pwd").getText();
-                if (StringUtils.isNotBlank(pwd)) {
-                    componentMap.get("pwd").setText(defaultPwd);
                 }
             }
         });
@@ -262,17 +262,17 @@ public class SvnGUI {
                     boolean success = new MakeWarPatch().startMake(config, true);
                     if (success) {
                         SvnGUI.progressBar.setValue(100);
+                        ConfigManager.writeConfig(getConfigJsonModel(config));
+                        // 隐藏密码
+                        String pwd = componentMap.get("pwd").getText();
+                        if (StringUtils.isNotBlank(pwd)) {
+                            componentMap.get("pwd").setText(defaultPwd);
+                        }
                     }
                     JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
                 } catch (Exception ee) {
                     log.error("打包失败", ee);
                     JOptionPane.showMessageDialog(panel, "打包失败");
-                }
-                ConfigManager.writeConfig(getConfigJsonModel(config));
-                // 隐藏密码
-                String pwd = componentMap.get("pwd").getText();
-                if (StringUtils.isNotBlank(pwd)) {
-                    componentMap.get("pwd").setText(defaultPwd);
                 }
             }
         });
@@ -293,9 +293,7 @@ public class SvnGUI {
         }
         list.forEach(cmdHisComboBox::addItem);
         // 自定义悬浮框
-        cmdHisComboBox.setRenderer(new
-
-                JComboBoxRenderer());
+        cmdHisComboBox.setRenderer(new JComboBoxRenderer());
         cmdHisComboBox.setSelectedIndex(0);
         comboBoxMap.put(cmdHisComboBox.getName(), cmdHisComboBox);
 
@@ -329,9 +327,7 @@ public class SvnGUI {
         }
         list2.forEach(mavenHisComboBox::addItem);
         // 自定义悬浮框
-        mavenHisComboBox.setRenderer(new
-
-                JComboBoxRenderer());
+        mavenHisComboBox.setRenderer(new JComboBoxRenderer());
         mavenHisComboBox.setSelectedIndex(0);
         comboBoxMap.put(mavenHisComboBox.getName(), mavenHisComboBox);
 
@@ -581,7 +577,7 @@ public class SvnGUI {
         JTextField userPwdText = new JTextField(220);
         userPwdText.setName("pwd");
         userPwdText.setBounds(120, 140, 400, 30);
-        userPwdText.setText(defaultPwd);
+        userPwdText.setText(defaultItem);
         panel.add(userPwdText);
         componentMap.put(userPwdText.getName(), userPwdText);
 
@@ -597,6 +593,7 @@ public class SvnGUI {
         configUserList.forEach(v -> {
             configUserMap.put(v.getUserName(), v);
             userHisComboBox.addItem(v.getUserName());
+            userPwdText.setText(defaultPwd);
         });
         // 自定义悬浮框
         userHisComboBox.setRenderer(new JComboBoxRenderer());
@@ -649,7 +646,7 @@ public class SvnGUI {
                     }
                 } catch (Exception ee) {
                     // ignore
-                    log.error("读取账号密码失败",ee);
+                    log.error("读取账号密码失败", ee);
                 }
 
             }

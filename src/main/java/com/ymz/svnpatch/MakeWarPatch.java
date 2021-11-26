@@ -85,7 +85,11 @@ public class MakeWarPatch {
         }
         log.info("unzipWarDstDir:{}", unzipWarDstDir);
         // 过滤删除代码
-        filterClass(config, unzipWarDstDir, url, user, pwd);
+        int filterClass = filterClass(config, unzipWarDstDir, url, user, pwd);
+        if(filterClass == 0){
+            log.error("获取过滤提交记录为空");
+            return false;
+        }
         SvnGUI.progressBar.setValue(80);
         // 压缩增量包
         String zipPath = unzipWarDstDir + File.separator + StringUtils.substringAfterLast(unzipWarDstDir, File.separator) + ".zip";
@@ -136,11 +140,12 @@ public class MakeWarPatch {
         return false;
     }
 
-    private void filterClass(ConfigModel config, String unzipWarDstDir, String url, String user, String pwd) {
+    private int filterClass(ConfigModel config, String unzipWarDstDir, String url, String user, String pwd) {
         SvnPatch svnPatch = new SvnPatch();
         log.info("目标地址:{}", unzipWarDstDir);
-        String deleteFilePath = unzipWarDstDir + File.separator + "del_files.log";
-        log.info("体检记录中删除的文件记录:{}", deleteFilePath);
+        StringUtils.substringAfterLast(url,"/");
+        String deleteFilePath = AllUtils.getJarPath() + File.separator + StringUtils.substringAfterLast(url,"/") + "_del_files.log";
+        log.info("提交记录中删除的文件记录:{}", deleteFilePath);
         List<Integer> versions = new ArrayList<>();
         String versionStr = config.getStartVersion();
         boolean versionRange = false;
@@ -162,6 +167,7 @@ public class MakeWarPatch {
         PatchFileFilter patchFileFilter = new PatchFileFilter(true, deleteFilePath);
         patchFileFilter.filterAndDel(svnRepositoryHistory, unzipWarDstDir);
         log.info("处理完毕，输出文件夹位置：{}", unzipWarDstDir);
+        return svnRepositoryHistory.size();
     }
 
     /**

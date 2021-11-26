@@ -14,6 +14,7 @@ public class ConfigJsonModel {
     private LinkedList<String> cmdHistories;
     private LinkedList<String> mavenHistories;
     private LinkedList<ConfigUser> userHistories;
+    private String maccode;
 
     public ConfigModel getLastUseConfig() {
         return lastUseConfig;
@@ -53,5 +54,13 @@ public class ConfigJsonModel {
 
     public void setMavenHistories(LinkedList<String> mavenHistories) {
         this.mavenHistories = mavenHistories;
+    }
+
+    public String getMaccode() {
+        return maccode;
+    }
+
+    public void setMaccode(String maccode) {
+        this.maccode = maccode;
     }
 }

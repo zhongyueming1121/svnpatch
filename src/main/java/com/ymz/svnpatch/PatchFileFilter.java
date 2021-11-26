@@ -43,10 +43,9 @@ public class PatchFileFilter {
      * @param rootPath
      */
     public void filterAndDel(List<String> history, String rootPath) {
-        int needClean = 0;
         // 转换为war包内地址(linux 斜杠)
         Set<String> fileInWarPath = transferLinuxPathInWar(history);
-        log.info("fileInWarPath:{}",fileInWarPath.toString());
+        log.debug("fileInWarPath:{}",fileInWarPath.toString());
         if(fileInWarPath.isEmpty()){
             return;
         }
@@ -92,7 +91,7 @@ public class PatchFileFilter {
             String svnInfo = svnRepositoryHistory.get(i);
             String svnInfoRaw = svnRepositoryHistory.get(i);
             // 处理斜杠为linux,方便处理
-            svnInfo = AllUtils.replaceFileSeparatorToLinux(svnInfo);
+            //svnInfo = AllUtils.replaceFileSeparatorToLinux(svnInfo);
             // 处理svn已被删除的代码或者文件
             handleRealDelFile(svnRepositoryHistory, deletes, i, svnInfoRaw);
             // 去除from信息
@@ -108,7 +107,7 @@ public class PatchFileFilter {
             }
             String filePathInWar = svnPathToPathInWar(svnInfo);
             if (StringUtils.isNotBlank(filePathInWar)) {
-                returnPathInWar.add(AllUtils.replaceFileSeparatorToLinux(filePathInWar));
+                returnPathInWar.add(filePathInWar);
             }
         }
         // 将被删除的集合文件输出到文件中
@@ -155,7 +154,7 @@ public class PatchFileFilter {
         // 处理类似这种
         //"A /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.1/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml
         //(from /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.0/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml:58651)";
-        if(!svn.contains(")")){
+        /*if(!svn.contains(")")){
             return svn;
         }
         String[] strings = StringUtils.substringsBetween(svn, "(", ")");
@@ -165,7 +164,8 @@ public class PatchFileFilter {
         }
         for (String string : strings) {
             svn = svn.replaceAll("\\(" + string + "\\)", "");
-        }
+        }*/
+        svn = StringUtils.substringBeforeLast(svn,"(").trim();
         return svn;
     }
 

@@ -21,15 +21,11 @@ public class GuiLogAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     protected void append(ILoggingEvent eventObject) {
         StringBuilder stringBuilder = new StringBuilder();
         asyncExecutor.execute(() -> {
-            try {
                 stringBuilder.append(" ").append(eventObject.getLevel().toString());
                 //stringBuilder.append(" ").append(eventObject.getLoggerName());
                 stringBuilder.append(" ").append(eventObject.getFormattedMessage());
                 SvnGUI.logQueue.offer(stringBuilder.toString());
                 stringBuilder.setLength(0);
-            } catch (Exception e) {
-                log.error("save operation error", e);
-            }
         });
 
     }

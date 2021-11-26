@@ -3,12 +3,11 @@ package com.ymz.util;
 import com.ymz.ui.SvnGUI;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,7 +21,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
@@ -278,11 +280,11 @@ public class AllUtils {
             // 获取本地IP对象
             InetAddress ia = InetAddress.getLocalHost();
             InetAddress[] inetAddressArr = InetAddress.getAllByName(ia.getHostName());
-            for (int i = 0; i < inetAddressArr.length; i++) {
-                if (inetAddressArr[i].getHostAddress() != null) {
-                    String ip = inetAddressArr[i].getHostAddress();
+            for (InetAddress inetAddress : inetAddressArr) {
+                if (inetAddress.getHostAddress() != null) {
+                    String ip = inetAddress.getHostAddress();
                     if (!(ip.endsWith(".1") || ip.endsWith(".0") || ip.endsWith(".255"))) {
-                        ia = inetAddressArr[i];
+                        ia = inetAddress;
                         break;
                     }
                 }
@@ -345,7 +347,10 @@ public class AllUtils {
             if (path.startsWith("/")) {
                 path = StringUtils.substringAfter(path, "/");
             }
-            log.info("程序路径：{}", path);
+            if(path.endsWith("/")){
+                path = path.substring(0,path.length()-1);
+            }
+            log.debug("程序路径：{}", path);
         } catch (UnsupportedEncodingException e) {
             log.error("获取程序路径失败", e);
         }
@@ -483,7 +488,7 @@ public class AllUtils {
 
         File baseDir = new File(baseDirName);        // 创建一个File对象
         if (!baseDir.exists() || !baseDir.isDirectory()) {    // 判断目录是否存在
-            System.out.println("文件查找失败：" + baseDirName + "不是一个目录！");
+            log.error("文件查找失败：" + baseDirName + "不是一个目录！");
         }
         String tempName = null;
         //判断目录是否存在
@@ -544,5 +549,18 @@ public class AllUtils {
         return (strIndex == strLength);
     }
 
+    public static String getMacCodeMd5(){
+        String code = getMacAddress();
+        if(StringUtils.isBlank(code)){
+            code = getCpuId();
+            if(StringUtils.isBlank(code)){
+                code = getHostName();
+            }
+        }
+        if(StringUtils.isBlank(code)){
+            code = "123";
+        }
+        return DigestUtils.md5Hex(code);
+    }
 
 }

@@ -15,26 +15,35 @@ import java.util.List;
  **/
 @Slf4j
 public class MavenBuild {
-    private static final List<String> PUBLISH_GOALS = Arrays.asList("clean", "package", "-DskipTests");
+    private static final List<String> PUBLISH_GOALS = Arrays.asList("clean", "package", "-Dmaven.test.skip=true");
 
     /**
      * maven打包
+     *
      * @param codePath
      * @param mavenHome
      * @param cmd
      * @return
      */
     public boolean buildWithMaven(String codePath, String mavenHome, String cmd) {
+        if (!cmd.contains("Dmaven.test.skip") && !cmd.contains("DskipTests")) {
+            cmd = cmd + " -Dmaven.test.skip=true ";
+        }
+        if (!cmd.contains("clean")) {
+            cmd = "clean " + cmd;
+        }
         String javaHome = System.getenv("JAVA_HOME");
         log.info("JAVA_HOME:{}", javaHome);
         File pomFile = BuildFileUtil.searchPomFile(codePath);
         assert pomFile != null;
         log.info("pom path:{}", pomFile.getPath());
+        log.info("build cmd:{}", cmd);
         return buildWithMaven(pomFile.getPath(), javaHome, mavenHome, Arrays.asList(cmd.split(" ")));
     }
 
     /**
      * maven打包
+     *
      * @param pomPath
      * @param javaHome
      * @param mavenHome

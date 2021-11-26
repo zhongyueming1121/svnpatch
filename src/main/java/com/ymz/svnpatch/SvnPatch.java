@@ -31,7 +31,7 @@ public class SvnPatch {
     /**
      * 最大log数：10万
      */
-    private static final int maxLoadFileNum = 100000;
+    private static final int maxLoadFileNum = 20000;
 
 
     /**
@@ -46,13 +46,14 @@ public class SvnPatch {
      * @return
      */
     public List<String> getSvnRepositoryHistory(String url, String user, String password, List<Integer> versions, boolean versionRange, Date startDate, Date endDate) {
+        log.info("开始获取svn提交记录");
         if (repository == null) {
             repository = doCreateSVNRepository(url, user, password.toCharArray());
         }
         // 得到历史记录
         List<String> history = new ArrayList<>();
         try {
-            history = svnLogHistory(versions, versionRange, startDate, endDate);
+            history = loadSvnLogHistory(versions, versionRange, startDate, endDate);
         } catch (Exception e) {
             log.error("getSvnRepositoryHistory error", e);
         }
@@ -60,7 +61,7 @@ public class SvnPatch {
     }
 
     /**
-     * 加载log 最大10万行
+     * 加载log 最大2万行
      *
      * @param versions
      * @param versionRange 是否版本范围
@@ -69,8 +70,8 @@ public class SvnPatch {
      * @return
      * @throws SVNException
      */
-    private List<String> svnLogHistory(List<Integer> versions, boolean versionRange, Date startDate, Date endDate) throws SVNException {
-        List<String> history = new ArrayList<>(10000);
+    private List<String> loadSvnLogHistory(List<Integer> versions, boolean versionRange, Date startDate, Date endDate) throws SVNException {
+        List<String> history = new ArrayList<>(1000);
         if (repository == null) {
             return history;
         }

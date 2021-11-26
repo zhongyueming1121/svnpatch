@@ -50,8 +50,28 @@ public class ConfigManager {
         ConfigJsonModel configJsonModel = gson.fromJson(jsonBuilder.toString(), ConfigJsonModel.class);
         if (configJsonModel == null) {
             configJsonModel = new ConfigJsonModel();
+        } else {
+            String macCodeMd5 = AllUtils.getMacCodeMd5();
+            if (!macCodeMd5.equals(configJsonModel.getMaccode())) {
+                configJsonModel = new ConfigJsonModel();
+                ConfigManager.clearConfig();
+            }
         }
         return configJsonModel;
+    }
+
+    /**
+     * 清空配置文件
+     */
+    public static void clearConfig() {
+        try {
+            String configPath = getConfigPath();
+            FileUtils.deleteQuietly(new File(configPath));
+            Files.write(Paths.get(configPath), "".getBytes(), StandardOpenOption.CREATE);
+        } catch (IOException e) {
+            log.error("保存配置文件失败", e);
+        }
+
     }
 
     /**
@@ -68,28 +88,28 @@ public class ConfigManager {
         LinkedList<String> cmdHistories = configJsonModel.getCmdHistories();
         LinkedList<String> mavenPathHistories = configJsonModel.getMavenHistories();
         for (; ; ) {
-            if (urlHistories.size() > 10) {
+            if (urlHistories != null && urlHistories.size() > 10) {
                 urlHistories.removeLast();
             } else {
                 break;
             }
         }
         for (; ; ) {
-            if (userHistories.size() > 10) {
+            if (userHistories != null && userHistories.size() > 10) {
                 userHistories.removeLast();
             } else {
                 break;
             }
         }
         for (; ; ) {
-            if (cmdHistories.size() > 10) {
+            if (cmdHistories != null && cmdHistories.size() > 10) {
                 cmdHistories.removeLast();
             } else {
                 break;
             }
         }
         for (; ; ) {
-            if (mavenPathHistories.size() > 10) {
+            if (mavenPathHistories != null && mavenPathHistories.size() > 10) {
                 mavenPathHistories.removeLast();
             } else {
                 break;
@@ -105,10 +125,11 @@ public class ConfigManager {
         lastUseConfig.setStartVersion("");
         lastUseConfig.setEndVersion("");
         configJsonModel.setLastUseConfig(lastUseConfig);
+        configJsonModel.setMaccode(AllUtils.getMacCodeMd5());
 
         String json = toPrettyFormat(configJsonModel);
         try {
-            //log.info("写入配置：{}", json);
+            log.debug("写入配置：{}", json);
             String configPath = getConfigPath();
             FileUtils.deleteQuietly(new File(configPath));
             Files.write(Paths.get(configPath), json.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
@@ -151,4 +172,5 @@ public class ConfigManager {
         }
         return path;
     }
+
 }

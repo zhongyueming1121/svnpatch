@@ -1,44 +1,35 @@
 {
   "lastUseConfig": {
-    "targetPath": "h3",
-    "url": "p4",
+    "url": "1",
     "user": {
-      "userName": "33333",
-      "password": "TlnlQFateIOhYTx00f5yHQ\u003d\u003d"
+      "userName": "1",
+      "password": "yUAEG13lVPLzyI9pK6q2FA\u003d\u003d"
     },
-    "startVersion": "17",
-    "cmd": "3",
-    "mavenHome": "4",
-    "endVersion": "8",
-    "startDate": 0,
-    "endDate": 0
+    "startVersion": "",
+    "cmd": "1",
+    "mavenHome": "G:\\war哈哈\\demo.war",
+    "endVersion": "",
+    "svnOrGit": 1,
+    "localWar": 0,
+    "logFrom": 1,
+    "patchFilePath": "",
+    "checkoutVersion": -1
   },
-  "targetPathHistories": [
-    "h3",
-    "h2"
-  ],
   "urlHistories": [
-    "p4",
-    "p2"
+    "1"
   ],
   "cmdHistories": [
-    "3"
+    "1"
   ],
   "mavenHistories": [
-    "4"
+    "G:\\war哈哈\\demo.war",
+    "1"
   ],
   "userHistories": [
     {
-      "userName": "33333",
-      "password": "TlnlQFateIOhYTx00f5yHQ\u003d\u003d"
-    },
-    {
-      "userName": "88",
-      "password": "IoKg29dny0w62vBr1+ibvg\u003d\u003d"
-    },
-    {
-      "userName": "66",
-      "password": "KCR3oZC6r0FuIVU5N8GOlA\u003d\u003d"
+      "userName": "1",
+      "password": "yUAEG13lVPLzyI9pK6q2FA\u003d\u003d"
     }
-  ]
+  ],
+  "maccode": "612966c3532bd3dc37f3332127f3d4ad"
 }
