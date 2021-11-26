@@ -341,15 +341,15 @@ public class AllUtils {
     public static String getJarPath() {
         String path = SvnGUI.class.getProtectionDomain().getCodeSource().getLocation().getFile();
         try {
-            path = java.net.URLDecoder.decode(path, "UTF-8");
-            path = StringUtils.substringBeforeLast(path, File.separator);
             path = AllUtils.replaceFileSeparatorToLinux(path);
+            path = StringUtils.substringBeforeLast(path, "/");
             if (path.startsWith("/")) {
                 path = StringUtils.substringAfter(path, "/");
             }
             if(path.endsWith("/")){
                 path = path.substring(0,path.length()-1);
             }
+            path = java.net.URLDecoder.decode(path, "UTF-8");
             log.debug("程序路径：{}", path);
         } catch (UnsupportedEncodingException e) {
             log.error("获取程序路径失败", e);

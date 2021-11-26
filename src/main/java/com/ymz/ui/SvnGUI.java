@@ -17,6 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Enumeration;
@@ -58,6 +59,11 @@ public class SvnGUI {
             configJsonModel = new ConfigJsonModel();
         }
         currentConfig = configJsonModel.getLastUseConfig() == null ? new ConfigModel() : configJsonModel.getLastUseConfig();
+        String jarPath = AllUtils.getJarPath();
+        File code = new File(jarPath + File.separator + "code");
+        File patch = new File(jarPath + File.separator + "patch");
+        code.mkdir();
+        patch.mkdir();
     }
 
     public static void main(String[] args) {

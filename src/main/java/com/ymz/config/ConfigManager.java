@@ -156,21 +156,7 @@ public class ConfigManager {
      * @return
      */
     private static String getConfigPath() {
-        String path = SvnGUI.class.getProtectionDomain().getCodeSource().getLocation().getFile();
-        log.debug("config path:{}", path);
-        try {
-            path = StringUtils.substringBeforeLast(path, "/");
-            path = java.net.URLDecoder.decode(path, "UTF-8");
-            path = path + File.separator + configDirName + File.separator + configFileName;
-            path = AllUtils.replaceFileSeparatorToLinux(path);
-            if (path.startsWith("/")) {
-                path = StringUtils.substringAfter(path, "/");
-            }
-            log.debug("配置文件路径：{}", path);
-        } catch (UnsupportedEncodingException e) {
-            log.error("获取配置文件路径失败", e);
-        }
-        return path;
+        return AllUtils.getJarPath() + File.separator + configDirName + File.separator + configFileName;
     }
 
 }

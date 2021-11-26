@@ -51,7 +51,7 @@ public class PatchFileFilter {
         }
         File rootFilePath = new File(rootPath);
         List<File> allFiles = AllUtils.getAllFiles(rootFilePath);
-        String parentName = StringUtils.substringAfterLast(rootPath, File.separator);
+        String parentName = StringUtils.substringAfterLast(rootFilePath.getPath(), File.separator);
         for (File file : allFiles) {
             // 判断是否spring.components文件
             if(file.getPath().endsWith("spring.components") || file.getPath().endsWith("build_version.properties")
