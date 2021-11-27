@@ -27,7 +27,7 @@
             <!--日志文件保留天数-->
             <MaxHistory>3</MaxHistory>
             <maxFileSize>5MB</maxFileSize>
-            <totalSizeCap>15M</totalSizeCap>
+            <totalSizeCap>15MB</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
