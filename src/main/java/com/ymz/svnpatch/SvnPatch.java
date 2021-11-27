@@ -98,6 +98,15 @@ public class SvnPatch {
         return history;
     }
 
+    /**
+     * 过滤日志
+     * @param startDate
+     * @param endDate
+     * @param history
+     * @param startVersion
+     * @param endVersion
+     * @param svnlogentry
+     */
     private void filterLog(Date startDate, Date endDate, List<String> history, Integer startVersion, Integer endVersion, SVNLogEntry svnlogentry) {
         if (svnlogentry == null) {
             return;
@@ -142,6 +151,14 @@ public class SvnPatch {
         }
     }
 
+    /**
+     * 过滤类型
+     * @param startVersion
+     * @param endVersion
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     private int getHandleType(int startVersion, int endVersion, Date startDate, Date endDate) {
         int type = 0;
         if (startVersion == 0 && endVersion == -1) {
@@ -160,7 +177,9 @@ public class SvnPatch {
     /**
      * 连接svn，并登陆
      *
-     * @param url
+     * @param url      项目url
+     * @param user     账号
+     * @param password 密码
      * @return
      */
     private synchronized SVNRepository doCreateSVNRepository(String url, String user, char[] password) {
@@ -213,36 +232,5 @@ public class SvnPatch {
             log.error("拉取代码失败", e);
         }
         return null;
-    }
-
-
-    /**
-     * recursively checks out a working copy from url into wcDir
-     *
-     * @param clientManager
-     * @param url           a repository location from where a Working Copy will be checked out
-     * @param revision      the desired revision of the Working Copy to be checked out
-     * @param destPath      the local path where the Working Copy will be placed
-     * @param depth         checkout的深度，目录、子目录、文件
-     * @return
-     * @throws SVNException
-     */
-    public static long checkout(SVNClientManager clientManager, SVNURL url,
-                                SVNRevision revision, File destPath, SVNDepth depth) {
-
-        SVNUpdateClient updateClient = clientManager.getUpdateClient();
-        /*
-         * sets externals not to be ignored during the checkout
-         */
-        updateClient.setIgnoreExternals(false);
-        /*
-         * returns the number of the revision at which the working copy is
-         */
-        try {
-            return updateClient.doCheckout(url, destPath, revision, revision, depth, false);
-        } catch (SVNException e) {
-            log.error("拉取代码失败", e);
-        }
-        return 0;
     }
 }
