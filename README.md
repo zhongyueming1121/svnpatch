@@ -25,6 +25,6 @@ svnpatch
 # 主界面图
 ![image](https://github.com/zhongyueming1121/svnpatch/blob/main/doc/window.jpg)
 
-# 使用run.bat运行程序
+# 使用run.cmd运行程序
 
 ![image](https://github.com/zhongyueming1121/svnpatch/blob/main/doc/run.jpg)
