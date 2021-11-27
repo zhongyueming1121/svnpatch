@@ -31,7 +31,7 @@ public class SvnPatch {
     /**
      * 最大log数：10万
      */
-    private static final int maxLoadFileNum = 20000;
+    private static final int maxLoadFileNum = 5000;
 
 
     /**
@@ -61,7 +61,7 @@ public class SvnPatch {
     }
 
     /**
-     * 加载log 最大2万行
+     * 加载log
      *
      * @param versions
      * @param versionRange 是否版本范围
