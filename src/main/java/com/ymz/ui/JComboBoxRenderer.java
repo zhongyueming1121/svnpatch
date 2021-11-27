@@ -21,8 +21,8 @@ public class JComboBoxRenderer extends BasicComboBoxRenderer {
             setForeground(list.getSelectionForeground());
             if (-1 < index) {
                 String show = value == null ? "" : value.toString();
-                if (show.length() > 100) {
-                    show = show.substring(100) + "...";
+                if (show.length() > 150) {
+                    show = show.substring(150) + "...";
                 }
                 list.setToolTipText((value == null) ? null : show);
             }
