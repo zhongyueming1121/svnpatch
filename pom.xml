@@ -205,13 +205,6 @@
             <artifactId>trilead-ssh2</artifactId>
             <version>1.0.0-build221</version>
         </dependency>
-        <!--<dependency>
-            <groupId>com.sun</groupId>
-            <artifactId>tools</artifactId>
-            <version>1.8.0</version>
-            <scope>system</scope>
-            <systemPath>${java.home}/../lib/tools.jar</systemPath>
-        </dependency>-->
     </dependencies>
 
     <build>
