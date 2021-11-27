@@ -256,7 +256,6 @@ public class SvnGUI {
             }
             progressBar.setValue(20);
             boolean success = new MakeWarPatch().startMake(config, full);
-            Thread.sleep(20 * 1000);
             if (success) {
                 SvnGUI.progressBar.setValue(100);
                 ConfigManager.writeConfig(getConfigJsonModel(config));
