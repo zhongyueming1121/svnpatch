@@ -5,6 +5,7 @@ import com.ymz.config.ConfigManager;
 import com.ymz.config.ConfigModel;
 import com.ymz.config.ConfigUser;
 import com.ymz.svnauth.Program;
+import com.ymz.svnpatch.MakeWarPatch;
 import com.ymz.util.AllUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -254,7 +255,7 @@ public class SvnGUI {
                 log.info("开始打增量包");
             }
             progressBar.setValue(20);
-            boolean success = true;//new MakeWarPatch().startMake(config, full);
+            boolean success = new MakeWarPatch().startMake(config, full);
             Thread.sleep(20 * 1000);
             if (success) {
                 SvnGUI.progressBar.setValue(100);
