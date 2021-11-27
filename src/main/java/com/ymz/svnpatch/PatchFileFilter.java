@@ -172,7 +172,7 @@ public class PatchFileFilter {
             return svn;
         }
         log.debug("replaceInfo befor:{}",svn);
-        svn = StringUtils.substringBeforeLast(svn,"(").trim();
+        svn = StringUtils.substringBefore(svn,"(").trim();
         log.debug("replaceInfo after:{}",svn);
         return svn;
     }
