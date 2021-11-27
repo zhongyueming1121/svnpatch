@@ -14,7 +14,8 @@ svn和git下快速增量包打包工具
 # 程序目录说明
 svnpatch  
 │  run.cmd #启动脚本  
-│  svnpatch.jar #主程序  
+│  svnpatch.jar #主程序 
+│  
 ├─code #下载的代码目录  
 ├─config #配置文件目录  
 │─rmsvnlog #svn中删除文件记录  
