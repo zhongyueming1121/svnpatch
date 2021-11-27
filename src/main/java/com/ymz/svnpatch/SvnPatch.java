@@ -27,7 +27,6 @@ import java.util.*;
 @Slf4j
 public class SvnPatch {
 
-    private static SVNRepository repository = null;
     /**
      * 最大log数：10万
      */
@@ -47,13 +46,11 @@ public class SvnPatch {
      */
     public List<String> getSvnRepositoryHistory(String url, String user, String password, List<Integer> versions, boolean versionRange, Date startDate, Date endDate) {
         log.info("开始获取svn提交记录");
-        if (repository == null) {
-            repository = doCreateSVNRepository(url, user, password.toCharArray());
-        }
         // 得到历史记录
         List<String> history = new ArrayList<>();
         try {
-            history = loadSvnLogHistory(versions, versionRange, startDate, endDate);
+            SVNRepository repository = doCreateSVNRepository(url, user, password.toCharArray());
+            history = loadSvnLogHistory(repository, versions, versionRange, startDate, endDate);
         } catch (Exception e) {
             log.error("getSvnRepositoryHistory error", e);
         }
@@ -63,6 +60,7 @@ public class SvnPatch {
     /**
      * 加载log
      *
+     * @param repository
      * @param versions
      * @param versionRange 是否版本范围
      * @param startDate
@@ -70,12 +68,12 @@ public class SvnPatch {
      * @return
      * @throws SVNException
      */
-    private List<String> loadSvnLogHistory(List<Integer> versions, boolean versionRange, Date startDate, Date endDate) throws SVNException {
+    private List<String> loadSvnLogHistory(SVNRepository repository, List<Integer> versions, boolean versionRange, Date startDate, Date endDate) throws SVNException {
         List<String> history = new ArrayList<>(1000);
         if (repository == null) {
             return history;
         }
-        if(versions.isEmpty() && startDate == null && endDate == null){
+        if (versions.isEmpty() && startDate == null && endDate == null) {
             log.error("未选过滤范围");
             return history;
         }
@@ -104,6 +102,7 @@ public class SvnPatch {
 
     /**
      * 过滤日志
+     *
      * @param startDate
      * @param endDate
      * @param history
@@ -157,6 +156,7 @@ public class SvnPatch {
 
     /**
      * 过滤类型
+     *
      * @param startVersion
      * @param endVersion
      * @param startDate

@@ -5,7 +5,6 @@ import com.ymz.config.ConfigManager;
 import com.ymz.config.ConfigModel;
 import com.ymz.config.ConfigUser;
 import com.ymz.svnauth.Program;
-import com.ymz.svnpatch.MakeWarPatch;
 import com.ymz.util.AllUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,20 +22,19 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class SvnGUI {
-    /**
-     * 历史密码
-     */
+
     private static HashMap<String, ConfigUser> configUserMap = new HashMap<>();
     private static DateTimePicker dateTimePickerStart = null;
     private static DateTimePicker dateTimePickerEnd = null;
     public static JProgressBar progressBar;
     private static Executor executor = Executors.newFixedThreadPool(1);
+    private static Executor executor2 = Executors.newFixedThreadPool(2);
     private static MyJTextArea outputTextArea;
     private static JScrollPane scrollPane;
     private static String defaultItem = "";
@@ -46,7 +44,8 @@ public class SvnGUI {
     private static HashMap<String, JComboBox<String>> comboBoxMap = new HashMap<>();
     private static HashMap<String, JRadioButton> comRadioMap = new HashMap<>();
     public static LinkedBlockingQueue<String> logQueue = new LinkedBlockingQueue<>(600);
-
+    private static volatile boolean taskRun = false;
+    private static Lock lock = new ReentrantLock();
     /**
      * 初始化配置文件
      */
@@ -204,84 +203,78 @@ public class SvnGUI {
 
     }
 
+    JButton patchBuildButton = new JButton("生成增量包");
+    JButton warBuildButton = new JButton("生成全量包");
+
     private void addButton(JPanel panel) {
-        // 创建登录按钮
-        JButton patchBuildButton = new JButton("生成增量包");
         patchBuildButton.setBounds(20, 680, 200, 30);
-        panel.add(patchBuildButton);
-        patchBuildButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                log.info("你按下了" + patchBuildButton.getText());
-                progressBar.setValue(10);
-                ConfigModel config = getConfig();
-                //log.info("config:{}", config.toString());
-                String checkInput = checkInput(config);
-                if (!"success".equals(checkInput)) {
-                    log.error(checkInput);
-                    JOptionPane.showMessageDialog(panel, checkInput);
-                    return;
-                }
-                progressBar.setValue(20);
-                // 打增量包
-                log.info("开始打增量包");
-                try {
-                    boolean success = new MakeWarPatch().startMake(config, false);
-                    if (success) {
-                        SvnGUI.progressBar.setValue(100);
-                        ConfigManager.writeConfig(getConfigJsonModel(config));
-                        // 隐藏密码
-                        String pwd = componentMap.get("pwd").getText();
-                        if (StringUtils.isNotBlank(pwd)) {
-                            componentMap.get("pwd").setText(defaultPwd);
-                        }
-                    }
-                    JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
-                } catch (Exception ee) {
-                    log.error("打包失败", ee);
-                    JOptionPane.showMessageDialog(panel, "打包失败");
-                }
-            }
+        patchBuildButton.addActionListener(e -> {
+            log.info("你按下了" + patchBuildButton.getText());
+            executor2.execute(() -> {
+                clickButtonBuildPatch(panel, false);
+            });
+
         });
+        panel.add(patchBuildButton);
 
         // 创建登录按钮
-        JButton warBuildButton = new JButton("生成全量包");
         warBuildButton.setBounds(260, 680, 200, 30);
+        warBuildButton.addActionListener(e -> {
+            log.info("你按下了" + warBuildButton.getText());
+            executor2.execute(() -> {
+                clickButtonBuildPatch(panel, true);
+            });
+        });
         panel.add(warBuildButton);
-        warBuildButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                log.info("你按下了" + warBuildButton.getText());
-                ConfigModel config = getConfig();
-                //log.info("config:{}", config.toString());
-                String checkInput = checkInput(config);
-                if (!"success".equals(checkInput)) {
-                    log.error(checkInput);
-                    JOptionPane.showMessageDialog(panel, checkInput);
-                    return;
-                }
+    }
+
+    /**
+     * 增量包打包
+     *
+     * @param panel
+     */
+    private void clickButtonBuildPatch(JPanel panel, boolean full) {
+        try {
+            warBuildButton.setEnabled(false);
+            patchBuildButton.setEnabled(false);
+
+            ConfigModel config = getConfig();
+            log.debug("config:{}", config.toString());
+            String checkInput = checkInput(config);
+            if (!"success".equals(checkInput)) {
+                log.error(checkInput);
+                JOptionPane.showMessageDialog(panel, checkInput);
+                return;
+            }
+            if (full) {
                 // 打全量包
-                config.setStartVersion("0");
-                config.setStartVersion("-1");
                 log.info("开始打全量包");
-                try {
-                    boolean success = new MakeWarPatch().startMake(config, true);
-                    if (success) {
-                        SvnGUI.progressBar.setValue(100);
-                        ConfigManager.writeConfig(getConfigJsonModel(config));
-                        // 隐藏密码
-                        String pwd = componentMap.get("pwd").getText();
-                        if (StringUtils.isNotBlank(pwd)) {
-                            componentMap.get("pwd").setText(defaultPwd);
-                        }
-                    }
-                    JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
-                } catch (Exception ee) {
-                    log.error("打包失败", ee);
-                    JOptionPane.showMessageDialog(panel, "打包失败");
+            } else {
+                // 打增量包
+                log.info("开始打增量包");
+            }
+            progressBar.setValue(20);
+            boolean success = true;//new MakeWarPatch().startMake(config, full);
+            Thread.sleep(20 * 1000);
+            if (success) {
+                SvnGUI.progressBar.setValue(100);
+                ConfigManager.writeConfig(getConfigJsonModel(config));
+                // 隐藏密码
+                String pwd = componentMap.get("pwd").getText();
+                if (StringUtils.isNotBlank(pwd)) {
+                    componentMap.get("pwd").setText(defaultPwd);
                 }
             }
-        });
+            JOptionPane.showMessageDialog(panel, success ? "打包完成" : "打包失败");
+
+        } catch (Exception ee) {
+            log.error("打包失败", ee);
+            JOptionPane.showMessageDialog(panel, "打包失败");
+        } finally {
+            warBuildButton.setEnabled(true);
+            patchBuildButton.setEnabled(true);
+
+        }
     }
 
     private void componentCmd(JPanel panel) {
