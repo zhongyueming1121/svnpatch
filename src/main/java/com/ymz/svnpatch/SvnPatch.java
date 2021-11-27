@@ -228,6 +228,7 @@ public class SvnPatch {
             SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
             updateClient.setIgnoreExternals(false);
             //执行check out 操作，返回工作副本的版本号。
+            log.info("开始拉取代码，请稍后...");
             long workingVersion = updateClient.doCheckout(repositoryURL, dstPath, SVNRevision.HEAD,
                     StringUtils.isBlank(version) ? SVNRevision.HEAD : SVNRevision.parse(version), SVNDepth.INFINITY, true);
             log.info("把版本：" + workingVersion + " check out 到目录：" + dstPath + "中成功。");
