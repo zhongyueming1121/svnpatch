@@ -144,7 +144,7 @@ public class MakeWarPatch {
         SvnPatch svnPatch = new SvnPatch();
         log.info("目标地址:{}", unzipWarDstDir);
         StringUtils.substringAfterLast(url,"/");
-        String deleteFilePath = AllUtils.getJarPath() + File.separator + StringUtils.substringAfterLast(url,"/") + "_del_files.log";
+        String deleteFilePath = AllUtils.getJarPath() + File.separator + "rmsvnlog" + File.separator + StringUtils.substringAfterLast(url,"/") + "_del_files.log";
         log.info("提交记录中删除的文件记录:{}", deleteFilePath);
         List<Integer> versions = new ArrayList<>();
         String versionStr = config.getStartVersion();

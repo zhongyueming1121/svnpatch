@@ -50,8 +50,10 @@ public class PatchFileFilter {
             return;
         }
         File rootFilePath = new File(rootPath);
+        log.debug("rootFilePath:{}",rootFilePath.getPath());
         List<File> allFiles = AllUtils.getAllFiles(rootFilePath);
         String parentName = StringUtils.substringAfterLast(rootFilePath.getPath(), File.separator);
+        log.debug("parentName:{}",parentName);
         for (File file : allFiles) {
             // 判断是否spring.components文件
             if(file.getPath().endsWith("spring.components") || file.getPath().endsWith("build_version.properties")
@@ -70,6 +72,7 @@ public class PatchFileFilter {
                 FileUtils.deleteQuietly(file);
                 log.debug("del: {}",localFilePathInWar);
             } else {
+                log.debug("保留文件warpath:{}",localFilePathInWar);
                 log.info("保留文件:{}",file.getPath());
             }
         }
@@ -165,7 +168,12 @@ public class PatchFileFilter {
         for (String string : strings) {
             svn = svn.replaceAll("\\(" + string + "\\)", "");
         }*/
+        if(!svn.contains("(")){
+            return svn;
+        }
+        log.debug("replaceInfo befor:{}",svn);
         svn = StringUtils.substringBeforeLast(svn,"(").trim();
+        log.debug("replaceInfo after:{}",svn);
         return svn;
     }
 

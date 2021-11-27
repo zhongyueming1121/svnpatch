@@ -44,8 +44,16 @@ public class AntBuild {
             project.fireBuildFinished(null);
             return true;
         } catch (BuildException e) {
+            String errorMsg = e.getMessage();
+            log.error("Ant执行异常:{}", errorMsg, e);
+            if(errorMsg!=null && errorMsg.contains("Unable to find a javac compiler")){
+                String javaHome = System.getProperty("java.home");
+                log.error("=========================================");
+                log.error("请尝试将jdk目录下lib中的 tools.jar 复制到jre目录下/lib/ext目录中.");
+                log.error("本机可能的jre目录：{}",javaHome);
+                log.error("=========================================");
+            }
             project.fireBuildFinished(e);
-            log.error("Ant执行异常:{}" + e.getMessage(), e);
         }
         return false;
     }

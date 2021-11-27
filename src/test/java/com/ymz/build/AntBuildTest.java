@@ -11,8 +11,8 @@ import java.io.File;
 public class AntBuildTest extends TestCase {
 
     public void testExecuteAntBuild() {
-        File buildFile = new File("G:\\Code\\test\\build.xml");
-        String targetName = "release-test";
+        File buildFile = new File("F:\\code\\build.xml");
+        String targetName = "release";
         new AntBuild().executeAntBuild(buildFile,targetName);
     }
 }
