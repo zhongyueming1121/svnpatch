@@ -1,5 +1,6 @@
 package com.ymz.svnpatch;
 
+import com.google.gson.Gson;
 import com.ymz.build.AntBuild;
 import com.ymz.build.BuildFileUtil;
 import com.ymz.build.MavenBuild;
@@ -30,7 +31,9 @@ public class MakeWarPatch {
      * @param config
      */
     public boolean startMake(ConfigModel config, boolean full) {
+        log.debug("startMake config:{}",new Gson().toJson(config));
         String unzipWarDstDir = "";
+        Integer checkoutVersion = config.getCheckoutVersion();
         String cmd = config.getCmd();
         String url = config.getUrl();
         String mavenHome = config.getMavenHome();
@@ -52,7 +55,7 @@ public class MakeWarPatch {
             unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
         } else {
             // 拉代码
-            String checkoutPath = checkoutAndBuild(cmd, url, user, pwd, codePath);
+            String checkoutPath = checkoutAndBuild(checkoutVersion == null ? null : checkoutVersion.toString(), url, user, pwd);
             if (StringUtils.isBlank(checkoutPath)) {
                 return false;
             }
@@ -102,13 +105,13 @@ public class MakeWarPatch {
     /**
      * 拉取代码和编译解压
      *
-     * @param cmd
+     * @param checkoutVersion
      * @param url
      * @param user
      * @param pwd
      * @return
      */
-    private String checkoutAndBuild(String checkoutVersion, String cmd, String url, String user, String pwd) {
+    private String checkoutAndBuild(String checkoutVersion, String url, String user, String pwd) {
         // 开始拉取代码
         SvnPatch svnPatch = new SvnPatch();
         String checkoutPath = svnPatch.checkOutByVersion(checkoutVersion, url, user, pwd);
@@ -158,10 +161,15 @@ public class MakeWarPatch {
                 String endVersion = versionStr.split("-")[1];
                 log.info("版本号:{}-{}", startVersion, endVersion);
                 versionRange = true;
+                versions.add(Integer.parseInt(startVersion));
+                versions.add(Integer.parseInt(endVersion));
+            } else {
+                versions.add(Integer.parseInt(versionStr));
+                versionRange = false;
             }
         }
-        Date startDate = (config.getStartDate() == null || config.getStartDate() == 1) ? null : new Date(config.getStartDate());
-        Date endDate = (config.getEndDate() == null || config.getEndDate() == 1) ? null : new Date(config.getEndDate());
+        Date startDate = (config.getStartDate() == null || config.getStartDate() == 0) ? null : new Date(config.getStartDate());
+        Date endDate = (config.getEndDate() == null || config.getEndDate() == 0) ? null : new Date(config.getEndDate());
         List<String> svnRepositoryHistory = svnPatch.getSvnRepositoryHistory(url, user, pwd, versions, versionRange, startDate, endDate);
         log.info("svnRepositoryHistory:{}", svnRepositoryHistory.toString());
         PatchFileFilter patchFileFilter = new PatchFileFilter(true, deleteFilePath);

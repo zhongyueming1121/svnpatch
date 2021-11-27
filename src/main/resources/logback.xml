@@ -21,6 +21,8 @@
     </appender>
     <!-- 按照每天生成日志文件 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 包含系统打印 -->
+        <target>System.out</target>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!--日志文件输出的文件名-->
             <FileNamePattern>${LOG_HOME}/logs-stuy.log.%d{yyyy-MM-dd}.%i.log</FileNamePattern>

@@ -75,6 +75,10 @@ public class SvnPatch {
         if (repository == null) {
             return history;
         }
+        if(versions.isEmpty() && startDate == null && endDate == null){
+            log.error("未选过滤范围");
+            return history;
+        }
         if (versions.isEmpty()) {
             repository.log(new String[]{""}, 0, -1, true, false, maxLoadFileNum, svnlogentry -> {
                 filterLog(startDate, endDate, history, 0, -1, svnlogentry);
