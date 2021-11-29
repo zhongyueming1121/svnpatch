@@ -157,17 +157,6 @@ public class PatchFileFilter {
         // 处理类似这种
         //"A /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.1/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml
         //(from /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.0/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml:58651)";
-        /*if(!svn.contains(")")){
-            return svn;
-        }
-        String[] strings = StringUtils.substringsBetween(svn, "(", ")");
-        if(strings.length ==0){
-            svn = svn.replaceAll("\\(", "").replaceAll("\\)","");
-            return svn;
-        }
-        for (String string : strings) {
-            svn = svn.replaceAll("\\(" + string + "\\)", "");
-        }*/
         if(!svn.contains("(")){
             return svn;
         }
