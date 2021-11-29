@@ -295,22 +295,6 @@ public class SvnGUI {
         cmdHisComboBox.setRenderer(new JComboBoxRenderer());
         cmdHisComboBox.setSelectedIndex(0);
         comboBoxMap.put(cmdHisComboBox.getName(), cmdHisComboBox);
-
-        //itemListener
-        ItemListener optHisComboBoxListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent arg0) {
-                if (ItemEvent.SELECTED == arg0.getStateChange()) {
-                    String selectedItem = arg0.getItem().toString();
-                    if (selectedItem.equals(defaultItem)) {
-                        return;
-                    }
-                    log.info("new selected item : {}", selectedItem);
-                }
-            }
-
-        };
-        cmdHisComboBox.addItemListener(optHisComboBoxListener);
         panel.add(cmdHisComboBox);
         // maven home 或者war包地址
         JLabel mavenHis = new JLabel("maven home：");
@@ -329,21 +313,6 @@ public class SvnGUI {
         mavenHisComboBox.setRenderer(new JComboBoxRenderer());
         mavenHisComboBox.setSelectedIndex(0);
         comboBoxMap.put(mavenHisComboBox.getName(), mavenHisComboBox);
-
-        //itemListener
-        ItemListener mavenHisComboBoxListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent arg0) {
-                if (ItemEvent.SELECTED == arg0.getStateChange()) {
-                    String selectedItem = arg0.getItem().toString();
-                    if (selectedItem.equals(defaultItem)) {
-                        return;
-                    }
-                    log.info("new selected item : {}", selectedItem);
-                }
-            }
-        };
-        mavenHisComboBox.addItemListener(mavenHisComboBoxListener);
         panel.add(mavenHisComboBox);
 
         // 文件类型
@@ -670,13 +639,6 @@ public class SvnGUI {
         urlHisComboBox.setEditable(true);
         comboBoxMap.put(urlHisComboBox.getName(), urlHisComboBox);
 
-        //itemListener
-        ItemListener urlHisComboBoxListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent arg0) {
-            }
-        };
-        urlHisComboBox.addItemListener(urlHisComboBoxListener);
         panel.add(urlHisComboBox);
 
         // svn/git单选按钮
@@ -731,18 +693,16 @@ public class SvnGUI {
      */
     private void showLog() {
         for (; ; ) {
-            try {
-                outputTextArea.append(logQueue.take());
+            String msg = logQueue.poll();
+            if (msg != null) {
+                outputTextArea.append(msg);
                 outputTextArea.append("\n");
                 //使垂直滚动条自动向下滚动
                 scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
             try {
                 Thread.sleep(100);
             } catch (Exception ee) {
-                ee.printStackTrace();
             }
         }
     }
