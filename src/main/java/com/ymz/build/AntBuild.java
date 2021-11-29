@@ -31,6 +31,7 @@ public class AntBuild {
             return false;
         }
         try {
+            log.info("开始ant编译war包：{}",targetName);
             DefaultLogger consoleLogger = new DefaultLogger();
             consoleLogger.setErrorPrintStream(System.err);
             consoleLogger.setOutputPrintStream(System.out);
@@ -42,6 +43,7 @@ public class AntBuild {
             helper.parse(project, buildFile);
             project.executeTarget(targetName);
             project.fireBuildFinished(null);
+            log.info("ant编译war包成功");
             return true;
         } catch (BuildException e) {
             String errorMsg = e.getMessage();

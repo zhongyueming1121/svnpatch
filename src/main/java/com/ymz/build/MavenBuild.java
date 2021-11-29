@@ -37,7 +37,7 @@ public class MavenBuild {
         File pomFile = BuildFileUtil.searchPomFile(codePath);
         assert pomFile != null;
         log.info("pom path:{}", pomFile.getPath());
-        log.info("build cmd:{}", cmd);
+        log.info("开始maven编译war包，cmd:{}", cmd);
         return buildWithMaven(pomFile.getPath(), javaHome, mavenHome, Arrays.asList(cmd.split(" ")));
     }
 
