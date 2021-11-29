@@ -35,7 +35,7 @@ public class SvnPatch {
      * 开始结束反转
      */
     private static boolean upturn = false;
-    protected static volatile boolean stop = false;
+    protected static volatile boolean stop = true;
 
 
     /**
@@ -248,18 +248,25 @@ public class SvnPatch {
             SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
             updateClient.setIgnoreExternals(false);
             //执行check out 操作，返回工作副本的版本号。
+            stop = false;
             log.info("开始拉取代码，请稍后...");
             executor.execute(()->{
                 for (int i = 0; i < 300; i++) {
-                    log.info("正在拉取代码...");
+                    if(!stop) {
+                        log.info("正在拉取代码...");
+                    } else {
+                        break;
+                    }
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
+                        break;
                     }
                 }
             });
             long workingVersion = updateClient.doCheckout(repositoryURL, dstPath, SVNRevision.HEAD,
                     StringUtils.isBlank(version) ? SVNRevision.HEAD : SVNRevision.parse(version), SVNDepth.INFINITY, true);
+            stop = true;
             executor.shutdownNow();
             log.info("把版本：" + workingVersion + " check out 到目录：" + dstPath + "中成功。");
             return dstPath.getPath();
