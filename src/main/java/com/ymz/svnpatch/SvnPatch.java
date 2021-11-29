@@ -169,8 +169,7 @@ public class SvnPatch {
         }
         if (changedPathsMap != null) {
             for (String key : changedPathsMap.keySet()) {
-                history.add(changedPathsMap.get(key) + "");
-                SVNLogEntryPath svnLogEntryPath = changedPathsMap.get(key);
+                history.add(changedPathsMap.get(key).toString());
             }
         }
 
