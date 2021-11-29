@@ -10,12 +10,10 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -31,6 +29,10 @@ public class SvnPatch {
      * 最大log数：10万
      */
     private static final int maxLoadFileNum = 5000;
+    /**
+     * 开始结束反转
+     */
+    private static boolean upturn = false;
 
 
     /**
@@ -49,8 +51,19 @@ public class SvnPatch {
         // 得到历史记录
         List<String> history = new ArrayList<>();
         try {
-            SVNRepository repository = doCreateSVNRepository(url, user, password.toCharArray());
-            history = loadSvnLogHistory(repository, versions, versionRange, startDate, endDate);
+            // 时间没有等于关系，这边需要稍微加减1秒
+            if (startDate != null && endDate != null) {
+                Calendar c = Calendar.getInstance();
+                c.setTime(startDate);
+                c.add(Calendar.SECOND, -1);
+                startDate = c.getTime();
+                Calendar c2 = Calendar.getInstance();
+                c2.setTime(endDate);
+                c2.add(Calendar.SECOND, 1);
+                endDate = c2.getTime();
+            }
+            SVNLogClient logClient = getLogClient(user, password);
+            history = loadSvnLogHistory(logClient, url, versions, versionRange, startDate, endDate);
         } catch (Exception e) {
             log.error("getSvnRepositoryHistory error", e);
         }
@@ -60,41 +73,46 @@ public class SvnPatch {
     /**
      * 加载log
      *
-     * @param repository
+     * @param svnLogClient
+     * @param url
      * @param versions
-     * @param versionRange 是否版本范围
+     * @param versionRange 是否范围版本
      * @param startDate
      * @param endDate
      * @return
      * @throws SVNException
      */
-    private List<String> loadSvnLogHistory(SVNRepository repository, List<Integer> versions, boolean versionRange, Date startDate, Date endDate) throws SVNException {
+    private List<String> loadSvnLogHistory(SVNLogClient svnLogClient, String url, List<Integer> versions, boolean versionRange, Date startDate, Date endDate) throws SVNException {
         List<String> history = new ArrayList<>(1000);
-        if (repository == null) {
-            return history;
-        }
+        boolean stopOnCopy = false;
+        boolean discoverChangedPaths = true;
+        boolean includeMergedRevisions = false;
+        SVNURL repositoryURL = SVNURL.parseURIEncoded(url);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
         if (versions.isEmpty() && startDate == null && endDate == null) {
             log.error("未选过滤范围");
             return history;
         }
         if (versions.isEmpty()) {
-            repository.log(new String[]{""}, 0, -1, true, false, maxLoadFileNum, svnlogentry -> {
-                filterLog(startDate, endDate, history, 0, -1, svnlogentry);
-            });
+            svnLogClient.doLog(repositoryURL, new String[]{""}, SVNRevision.HEAD, SVNRevision.parse("{" + sdf.format(startDate) + "}"), SVNRevision.parse("{" + sdf.format(endDate) + "}"),
+                    stopOnCopy, discoverChangedPaths, includeMergedRevisions, maxLoadFileNum, null, svnlogentry -> {
+                        filterLog(startDate, endDate, history, 0, 0, svnlogentry);
+                    });
         }
         if (versionRange) {
-            Integer startVersion = versions.get(0);
-            Integer endVersion = versions.get(1);
-            // String[] 为过滤的文件路径前缀，为空表示不进行过滤
-            // strictNode 设为 false 时，日志会追溯到每个文件的开始
-            repository.log(new String[]{""}, startVersion, endVersion, true, false, maxLoadFileNum, svnlogentry -> {
-                filterLog(startDate, endDate, history, startVersion, endVersion, svnlogentry);
-            });
+            Integer startVersion = versions.get(upturn ? 1 : 0);
+            Integer endVersion = versions.get(upturn ? 0 : 1);
+            svnLogClient.doLog(repositoryURL, new String[]{""}, SVNRevision.HEAD, SVNRevision.parse(startVersion + ""), SVNRevision.parse(endVersion + ""),
+                    stopOnCopy, discoverChangedPaths, includeMergedRevisions, maxLoadFileNum, null, svnlogentry -> {
+                        filterLog(startDate, endDate, history, startVersion, endVersion, svnlogentry);
+                    });
         } else {
             for (Integer version : versions) {
-                repository.log(new String[]{""}, version, version, true, false, maxLoadFileNum, svnlogentry -> {
-                    filterLog(startDate, endDate, history, version, version, svnlogentry);
-                });
+                svnLogClient.doLog(repositoryURL, new String[]{""}, SVNRevision.HEAD, SVNRevision.parse(version + ""), SVNRevision.parse(version + ""),
+                        stopOnCopy, discoverChangedPaths, includeMergedRevisions, maxLoadFileNum, null, svnlogentry -> {
+                            filterLog(startDate, endDate, history, version, version, svnlogentry);
+                        });
             }
         }
         return history;
@@ -116,7 +134,6 @@ public class SvnPatch {
         }
         log.info("filterLog-->startVersion：{}，endVersion：{}，startDate：{}，endDate：{}", startVersion, endVersion, startDate, endDate);
         Map<String, SVNLogEntryPath> changedPathsMap = new HashMap<>();
-        List<String> svnFilePaths = new ArrayList<>();
         int handleType = getHandleType(startVersion, endVersion, startDate, endDate);
         if (handleType == 0) {
             // 没有限制
@@ -147,11 +164,11 @@ public class SvnPatch {
         }
         if (changedPathsMap != null) {
             for (String key : changedPathsMap.keySet()) {
-                svnFilePaths.add(changedPathsMap.get(key) + "");
-                log.info(changedPathsMap.get(key) + "");
+                history.add(changedPathsMap.get(key) + "");
+                SVNLogEntryPath svnLogEntryPath = changedPathsMap.get(key);
             }
-            history.addAll(svnFilePaths);
         }
+
     }
 
     /**
@@ -165,7 +182,7 @@ public class SvnPatch {
      */
     private int getHandleType(int startVersion, int endVersion, Date startDate, Date endDate) {
         int type = 0;
-        if (startVersion == 0 && endVersion == -1) {
+        if (startVersion == 0 && endVersion == 0) {
             type += 0;
         } else {
             type += 1;
@@ -237,5 +254,18 @@ public class SvnPatch {
             log.error("拉取代码失败", e);
         }
         return null;
+    }
+
+    /**
+     * 获取操作客户端
+     *
+     * @param name
+     * @param pwd
+     * @return
+     */
+    private SVNLogClient getLogClient(String name, String pwd) {
+        DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
+        SVNClientManager svnClientManager = SVNClientManager.newInstance(options, name, pwd);
+        return svnClientManager.getLogClient();
     }
 }
