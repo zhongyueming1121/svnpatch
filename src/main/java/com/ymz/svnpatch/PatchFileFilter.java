@@ -157,11 +157,11 @@ public class PatchFileFilter {
         // 处理类似这种
         //"A /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.1/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml
         //(from /00Developing/02Code/branches/cloudEyes/safedogConsole_privateV4.3.0/cloudeyes-web/src/main/resources/env/release/spring-kafka.xml:58651)";
-        if(!svn.contains("(")){
+        if(!svn.contains("(from ")){
             return svn;
         }
         log.debug("replaceInfo befor:{}",svn);
-        svn = StringUtils.substringBefore(svn,"(").trim();
+        svn = StringUtils.substringBefore(svn,"(from ").trim();
         log.debug("replaceInfo after:{}",svn);
         return svn;
     }
