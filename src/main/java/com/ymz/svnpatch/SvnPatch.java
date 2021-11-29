@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * 获取增量文件列表
@@ -24,15 +25,17 @@ import java.util.*;
  **/
 @Slf4j
 public class SvnPatch {
-
-    /**
-     * 最大log数：10万
-     */
+    private static ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1,
+            0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(2));
+            /**
+             * 最大log数：10万
+             */
     private static final int maxLoadFileNum = 5000;
     /**
      * 开始结束反转
      */
     private static boolean upturn = false;
+    protected static volatile boolean stop = false;
 
 
     /**
@@ -246,8 +249,18 @@ public class SvnPatch {
             updateClient.setIgnoreExternals(false);
             //执行check out 操作，返回工作副本的版本号。
             log.info("开始拉取代码，请稍后...");
+            executor.execute(()->{
+                for (int i = 0; i < 300; i++) {
+                    log.info("正在拉取代码...");
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                    }
+                }
+            });
             long workingVersion = updateClient.doCheckout(repositoryURL, dstPath, SVNRevision.HEAD,
                     StringUtils.isBlank(version) ? SVNRevision.HEAD : SVNRevision.parse(version), SVNDepth.INFINITY, true);
+            executor.shutdownNow();
             log.info("把版本：" + workingVersion + " check out 到目录：" + dstPath + "中成功。");
             return dstPath.getPath();
         } catch (Exception e) {
