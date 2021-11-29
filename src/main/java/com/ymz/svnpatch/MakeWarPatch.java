@@ -52,7 +52,12 @@ public class MakeWarPatch {
             }
             String warPath = config.getMavenHome();
             File warFile = new File(warPath);
-            unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
+            try {
+                unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
+            } catch (IOException e) {
+                log.error("解压过程报错",e);
+                return false;
+            }
         } else {
             // 拉代码
             String checkoutPath = checkoutAndBuild(checkoutVersion == null ? null : checkoutVersion.toString(), url, user, pwd);
@@ -78,7 +83,12 @@ public class MakeWarPatch {
                 return true;
             }
             // 解压war包
-            unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
+            try {
+                unzipWarDstDir = unzipWarFile(warFile, new File(warDstPath));
+            } catch (IOException e) {
+                log.error("解压过程报错",e);
+                return false;
+            }
         }
         if(unzipWarDstDir == null){
             log.error("解压war包失败");
@@ -183,12 +193,11 @@ public class MakeWarPatch {
      *
      * @param warFile
      */
-    private String unzipWarFile(File warFile, File dstPath) {
+    private String unzipWarFile(File warFile, File dstPath) throws IOException {
         if (dstPath.exists() && dstPath.isDirectory()) {
-            try {
+            AllUtils.deleteFileOrDirectory(dstPath);
+            if(dstPath.exists()) {
                 FileUtils.forceDelete(dstPath);
-            } catch (IOException e) {
-                log.error("del unzipWarDstPath error", e);
             }
         } else {
             dstPath.mkdir();

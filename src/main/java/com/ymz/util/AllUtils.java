@@ -563,4 +563,33 @@ public class AllUtils {
         return DigestUtils.md5Hex(code);
     }
 
+
+    public static void deleteFileOrDirectory(File file) {
+        if (null != file) {
+            if (!file.exists()) {
+                return;
+            }
+            int i;
+            // file 是文件
+            if (file.isFile()) {
+                boolean result = file.delete();
+                for(i = 0; !result && i++ < 20; result = file.delete()) {
+                    System.gc();
+                }
+                return;
+            }
+            // file 是目录
+            File[] files = file.listFiles();
+            if (null != files) {
+                for(i = 0; i < files.length; ++i) {
+                    deleteFileOrDirectory(files[i]);
+                }
+            }
+            file.delete();
+        }
+
+    }
+
+
+
 }

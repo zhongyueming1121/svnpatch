@@ -15,7 +15,9 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 获取增量文件列表
@@ -229,6 +231,15 @@ public class SvnPatch {
      */
     public String checkOutByVersion(String version, String url, String name, String pwd) {
         try {
+            String dirName = StringUtils.substringAfterLast(url, "/");
+            String basePath = AllUtils.getCodePath();
+            File deleteDir = new File(basePath + File.separator + dirName);
+            if (deleteDir.exists() && deleteDir.isDirectory()) {
+                AllUtils.deleteFileOrDirectory(deleteDir);
+                if(deleteDir.exists()) {
+                    FileUtils.forceDelete(deleteDir);
+                }
+            }
             SVNClientManager ourClientManager;
             //初始化支持svn://协议的库。 必须先执行此操作。
             DAVRepositoryFactory.setup();
@@ -237,12 +248,6 @@ public class SvnPatch {
             DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
             //实例化客户端管理类
             ourClientManager = SVNClientManager.newInstance(options, name, pwd);
-            String dirName = StringUtils.substringAfterLast(url, "/");
-            String basePath = AllUtils.getCodePath();
-            File delteDir = new File(basePath + File.separator + dirName);
-            if (delteDir.exists() && delteDir.isDirectory()) {
-                FileUtils.forceDelete(delteDir);
-            }
             File dstPath = new File(basePath + File.separator + dirName);
             //通过客户端管理类获得updateClient类的实例。
             SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
