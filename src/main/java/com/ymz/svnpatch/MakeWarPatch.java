@@ -181,7 +181,7 @@ public class MakeWarPatch {
         Date startDate = (config.getStartDate() == null || config.getStartDate() == 0) ? null : new Date(config.getStartDate());
         Date endDate = (config.getEndDate() == null || config.getEndDate() == 0) ? null : new Date(config.getEndDate());
         List<String> svnRepositoryHistory = svnPatch.getSvnRepositoryHistory(url, user, pwd, versions, versionRange, startDate, endDate);
-        log.info("svnRepositoryHistory:{}", svnRepositoryHistory.toString());
+        log.debug("svnRepositoryHistory:{}", svnRepositoryHistory.toString());
         PatchFileFilter patchFileFilter = new PatchFileFilter(true, deleteFilePath);
         patchFileFilter.filterAndDel(svnRepositoryHistory, unzipWarDstDir);
         log.info("处理完毕，输出文件夹位置：{}", unzipWarDstDir);
