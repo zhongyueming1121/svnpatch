@@ -1,5 +1,6 @@
 package com.ymz.svnpatch;
 
+import com.ymz.constant.NameConstant;
 import com.ymz.util.AllUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -56,8 +57,8 @@ public class PatchFileFilter {
         log.debug("parentName:{}",parentName);
         for (File file : allFiles) {
             // 判断是否spring.components文件
-            if(file.getPath().endsWith("spring.components") || file.getPath().endsWith("build_version.properties")
-                    || file.getPath().endsWith("MANIFEST.MF")){
+            if(file.getPath().endsWith(NameConstant.spring_components) || file.getPath().endsWith(NameConstant.build_version)
+                    || file.getPath().endsWith(NameConstant.manifest)){
                 log.info("保留特殊文件:{}",file.getPath());
                 continue;
             }
@@ -222,6 +223,14 @@ public class PatchFileFilter {
     public void writeListToFile(List<String> listStr) {
         try {
             File file = new File(deleteFilePath);
+            if(file.exists()){
+                AllUtils.deleteFileOrDirectory(file);
+            } else {
+                File dir = new File(AllUtils.getJarPath() + File.separator + NameConstant.rmsvnlog);
+                if(!dir.exists()) {
+                    dir.mkdirs();
+                }
+            }
             file.createNewFile();
             FileUtils.write(file, "", false);
             for (String str : listStr) {

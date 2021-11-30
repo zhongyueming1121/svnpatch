@@ -1,9 +1,7 @@
 package com.ymz.ui;
 
-import com.ymz.config.ConfigJsonModel;
-import com.ymz.config.ConfigManager;
-import com.ymz.config.ConfigModel;
-import com.ymz.config.ConfigUser;
+import com.ymz.config.*;
+import com.ymz.constant.NameConstant;
 import com.ymz.svnauth.Program;
 import com.ymz.svnpatch.MakeWarPatch;
 import com.ymz.util.AllUtils;
@@ -60,8 +58,8 @@ public class SvnGUI {
         }
         currentConfig = configJsonModel.getLastUseConfig() == null ? new ConfigModel() : configJsonModel.getLastUseConfig();
         String jarPath = AllUtils.getJarPath();
-        File code = new File(jarPath + File.separator + "code");
-        File patch = new File(jarPath + File.separator + "patch");
+        File code = new File(jarPath + File.separator + NameConstant.code);
+        File patch = new File(jarPath + File.separator + NameConstant.patch);
         code.mkdir();
         patch.mkdir();
     }

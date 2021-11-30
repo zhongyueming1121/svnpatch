@@ -2,15 +2,13 @@ package com.ymz.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.ymz.constant.NameConstant;
 import com.ymz.util.AllUtils;
-import com.ymz.ui.SvnGUI;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -25,8 +23,6 @@ import java.util.LinkedList;
  **/
 @Slf4j
 public class ConfigManager {
-    private static String configDirName = "config";
-    private static String configFileName = "config.json";
 
     /**
      * 读取配置
@@ -156,7 +152,7 @@ public class ConfigManager {
      * @return
      */
     private static String getConfigPath() {
-        return AllUtils.getJarPath() + File.separator + configDirName + File.separator + configFileName;
+        return AllUtils.getJarPath() + File.separator + NameConstant.config + File.separator + NameConstant.configFileName;
     }
 
 }

@@ -1,5 +1,6 @@
 package com.ymz.util;
 
+import com.ymz.constant.NameConstant;
 import com.ymz.ui.SvnGUI;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
@@ -436,7 +437,7 @@ public class AllUtils {
      * @return
      */
     public static String getCodePath() {
-        return getJarPath() + File.separator + "code";
+        return getJarPath() + File.separator + NameConstant.code;
     }
 
     /**
@@ -445,7 +446,7 @@ public class AllUtils {
      * @return
      */
     public static String getPatchPath() {
-        return getJarPath() + File.separator + "patch";
+        return getJarPath() + File.separator + NameConstant.patch;
     }
 
     /**
