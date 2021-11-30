@@ -275,6 +275,8 @@ public class SvnPatch {
             log.info("把版本：" + workingVersion + " check out 到目录：" + dstPath + "中成功。");
             return dstPath.getPath();
         } catch (Exception e) {
+            stop = true;
+            executor.shutdownNow();
             log.error("拉取代码失败", e);
         }
         return null;
