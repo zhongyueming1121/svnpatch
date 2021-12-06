@@ -160,15 +160,15 @@ public class MakeWarPatch {
         String deleteFilePath = AllUtils.getJarPath() + File.separator + "rmsvnlog" + File.separator + StringUtils.substringAfterLast(url,"/") + "_del_files.log";
         log.info("提交记录中删除的文件记录:{}", deleteFilePath);
         List<Integer> versions = new ArrayList<>();
-        String versionStr = config.getStartVersion();
+        String versionStr = config.getStartVersion().trim();
         boolean versionRange = false;
         if (StringUtils.isNotBlank(versionStr)) {
             if (versionStr.contains(",")) {
-                versions = Arrays.stream(versionStr.split(",")).mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+                versions = Arrays.stream(versionStr.split(",")).mapToInt(v->Integer.parseInt(v.trim())).boxed().collect(Collectors.toList());
                 log.info("版本号:{}", versions.toString());
             } else if (versionStr.contains("-")) {
-                String startVersion = versionStr.split("-")[0];
-                String endVersion = versionStr.split("-")[1];
+                String startVersion = versionStr.split("-")[0].trim();
+                String endVersion = versionStr.split("-")[1].trim();
                 log.info("版本号:{}-{}", startVersion, endVersion);
                 versionRange = true;
                 versions.add(Integer.parseInt(startVersion));
