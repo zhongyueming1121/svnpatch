@@ -15,9 +15,7 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * 获取增量文件列表
@@ -27,11 +25,10 @@ import java.util.concurrent.TimeUnit;
  **/
 @Slf4j
 public class SvnPatch {
-    private static ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1,
-            0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(2));
-            /**
-             * 最大log数：10万
-             */
+    private static Executor executor = Executors.newCachedThreadPool();
+    /**
+     * 最大log数：5000
+     */
     private static final int maxLoadFileNum = 5000;
     /**
      * 开始结束反转
@@ -255,7 +252,7 @@ public class SvnPatch {
             stop = false;
             log.info("开始拉取代码，请稍后...");
             executor.execute(()->{
-                for (int i = 0; i < 300; i++) {
+                for (int i = 0; i < 30; i++) {
                     if(!stop) {
                         log.info("正在拉取代码...");
                     } else {
@@ -271,12 +268,10 @@ public class SvnPatch {
             long workingVersion = updateClient.doCheckout(repositoryURL, dstPath, SVNRevision.HEAD,
                     StringUtils.isBlank(version) ? SVNRevision.HEAD : SVNRevision.parse(version), SVNDepth.INFINITY, true);
             stop = true;
-            executor.shutdownNow();
             log.info("把版本：" + workingVersion + " check out 到目录：" + dstPath + "中成功。");
             return dstPath.getPath();
         } catch (Exception e) {
             stop = true;
-            executor.shutdownNow();
             log.error("拉取代码失败", e);
         }
         return null;

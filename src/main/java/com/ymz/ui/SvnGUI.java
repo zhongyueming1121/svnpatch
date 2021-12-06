@@ -439,10 +439,10 @@ public class SvnGUI {
         Date dateStart = dateTimePickerStart.getDate();
         Date dateEnd = dateTimePickerEnd.getDate();
         ConfigModel configModel = new ConfigModel();
-        configModel.setUrl(StringUtils.isBlank(url) ? "" : url);
-        configModel.setCmd(StringUtils.isBlank(cmd) ? "" : cmd);
-        configModel.setMavenHome(StringUtils.isBlank(mavenHome) ? "" : mavenHome);
-        configModel.setStartVersion(StringUtils.isBlank(startVersion) ? "" : startVersion);
+        configModel.setUrl(StringUtils.isBlank(url) ? "" : url.trim());
+        configModel.setCmd(StringUtils.isBlank(cmd) ? "" : cmd.trim());
+        configModel.setMavenHome(StringUtils.isBlank(mavenHome) ? "" : mavenHome.trim());
+        configModel.setStartVersion(StringUtils.isBlank(startVersion) ? "" : startVersion.trim());
         //configModel.setEndVersion(StringUtils.isBlank(endVersion) ? "" : endVersion);
         configModel.setCheckoutVersion(StringUtils.isNotBlank(version) ? Integer.parseInt(version) : -1);
         configModel.setStartDate(dateStart == null ? 0L : dateStart.getTime());
